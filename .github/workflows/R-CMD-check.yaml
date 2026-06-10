@@ -1,0 +1,37 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+name: R-CMD-check
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, r: release}
+          - {os: macos-latest, r: release}
+          - {os: windows-latest, r: release}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+      # OPT-IN — uncomment when DESCRIPTION imports sf / terra / stars / gdalcubes.
+      # See rubrics/audit_punchlist.md, "macOS PROJ env exported in R-CMD-check.yaml
+      # for sf / terra / stars / gdalcubes packages" (v0.4.6 — nert PR #31).
+      # - name: Configure PROJ on macOS
+      #   if: runner.os == 'macOS'
+      #   run: |
+      #     brew install proj
+      #     echo "PROJ_LIB=$(brew --prefix proj)/share/proj" >> "$GITHUB_ENV"
+      #     echo "PROJ_DATA=$(brew --prefix proj)/share/proj" >> "$GITHUB_ENV"
+      - uses: r-lib/actions/check-r-package@v2

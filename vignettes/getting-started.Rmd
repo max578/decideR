@@ -1,0 +1,153 @@
+---
+title: "Getting started with decideR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with decideR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+set.seed(1L)
+```
+
+```{r}
+library(decideR)
+```
+
+## What decideR does
+
+`decideR` turns *uncertainty about the world* into *an action*. Given posterior
+draws of an unknown state $\theta$, an explicit utility $U(a, \theta)$, and a set
+of candidate actions, it chooses the feasible action of greatest expected utility,
+$\arg\max_a \mathrm{E}_\theta[U(a, \theta)]$. It is the decision layer of the
+ORCHESTRA analytics framework: the same engine sizes a crop nitrogen rate and a
+trading position, because both are the same problem -- act under uncertainty, and
+refuse to act when the evidence will not support it.
+
+Two principles separate `decideR` from a bare `which.max`:
+
+1. **Calibrated abstention.** A decision may decline to move off a safe fallback
+   action when the evidence is too thin, too few, or not clearly better than the
+   status quo. Abstention is a first-class outcome, recorded with a reason.
+2. **The Independent Oracle Principle (IOP).** Every decision carries a
+   *grounding* label, combined worst-case from its inputs. A decision built on a
+   fact that has not been checked against the external authority that owns it is
+   labelled `[unverified]` and is downgraded to abstention -- never asserted with
+   false confidence.
+
+## A crop decision: nitrogen rate
+
+Suppose an upstream model -- a mechanistic-simulator inversion, say -- gives us
+posterior draws of grain yield at each candidate nitrogen rate. We choose the
+rate that maximises expected profit, $\mathrm{E}[p_y\,y(r) - p_r\,r]$.
+
+```{r}
+rates <- seq(0, 200, by = 25)
+ymax  <- rnorm(2000L, mean = 5.5, sd = 0.3)        # posterior of asymptotic yield
+yield_draws <- vapply(
+  rates,
+  function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)) + rnorm(2000L, 0, 0.1),
+  numeric(2000L)
+)
+
+d_crop <- decide_input_rate(
+  yield_draws, rates, price_grain = 300, price_input = 1.2,
+  grounding = grounding_grounded()
+)
+d_crop
+```
+
+The decision selects an interior optimum and reports the expected profit that
+justified it. The full candidate ledger is available for inspection or a methods
+appendix:
+
+```{r}
+head(d_crop@candidates)
+```
+
+### What happens when the yield evidence is not grounded
+
+The same call, but now the yield draws come from a source that has *not* been
+verified against an external authority (the IOP default):
+
+```{r}
+d_crop_ungrounded <- decide_input_rate(
+  yield_draws, rates, price_grain = 300, price_input = 1.2,
+  grounding = grounding_unverified()
+)
+d_crop_ungrounded
+```
+
+The decision abstains to the status quo (`rate = 0`), records the reason
+`input_ungrounded`, and stamps the action label `[unverified]`. No confident
+recommendation is minted on an unchecked fact.
+
+## A trading decision: position size
+
+The identical engine sizes a position. Given predictive draws of the next-period
+return, `decide_position_size()` chooses the fraction of capital that maximises
+expected log-growth $\mathrm{E}[\log(1 + f\,r)]$ -- the Kelly objective -- over a
+grid capped at `kelly_cap`, subject to a hard drawdown constraint.
+
+```{r}
+returns <- rnorm(5000L, mean = 0.02, sd = 0.03)    # a small positive edge
+d_trade <- decide_position_size(
+  returns, capital = 1000, max_drawdown = 0.15,
+  grounding = grounding_grounded()
+)
+d_trade
+d_trade@metadata$position                          # implied dollar position
+```
+
+With **no edge**, the grid maximiser is naturally flat -- the engine does not
+manufacture a position where none is warranted:
+
+```{r}
+flat <- decide_position_size(
+  rnorm(5000L, mean = 0, sd = 0.03), capital = 1000, max_drawdown = 0.15,
+  grounding = grounding_grounded()
+)
+flat@action                                        # 0: flat
+```
+
+And the **capital firewall**: an un-grounded return series -- a price feed not
+verified against the exchange -- forces flat, regardless of how attractive the
+numbers look.
+
+```{r}
+d_trade_ungrounded <- decide_position_size(
+  returns, capital = 1000, max_drawdown = 0.15,
+  grounding = grounding_unverified()
+)
+d_trade_ungrounded@abstained
+d_trade_ungrounded@abstain_reason
+```
+
+## The shared keystone
+
+Both decisions above route through one internal engine. A nitrogen rate and a
+position size are the same computation -- expected-utility maximisation over a
+candidate grid, under a feasibility constraint, with grounding and abstention.
+That is the design claim `decideR` makes concrete: one decision layer, many
+domains, and the same honesty discipline applied to a paddock and to real money.
+
+## The abstention vocabulary
+
+A decision reports exactly why it declined, if it did. The reasons, in the order
+they are checked:
+
+| Reason | Meaning |
+|---|---|
+| `input_ungrounded` | An input fact is `[unverified]` (the IOP firewall). |
+| `no_feasible_action` | No candidate satisfies the constraint. |
+| `low_ess` | The effective sample size is below the floor. |
+| `insufficient_evidence` | The best action does not clearly beat the status quo. |
+
+In every case the returned `action` is the caller's `safe_action`, and
+`is_grounded()` reports whether the decision rests on grounded evidence -- the
+single predicate a downstream consumer (for example a live order path) gates on.

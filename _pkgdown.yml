@@ -1,0 +1,10 @@
+url: https://max578.github.io/decideR
+template:
+  bootstrap: 5
+reference:
+  - title: Functions
+    contents:
+      - matches(".*")
+articles:
+  - title: Articles
+    navbar: ~
