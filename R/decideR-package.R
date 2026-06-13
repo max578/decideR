@@ -1,6 +1,6 @@
 #' decideR: Bayesian Decision-Theoretic Actions under Loss and Hard Constraints
 #'
-#' Maps a posterior distribution or an 'orchestra_manifest' inference result to an optimal action under an explicit loss function and a hard feasibility constraint, returning the action together with a grounding label and an honest abstention when evidence is insufficient. The grounding label is combined worst-case across inputs, so a decision resting on an unverified external fact is downgraded to abstention rather than asserted with false confidence. Reference decisions cover bounded input-rate selection and constraint-capped position sizing.
+#' Maps a posterior distribution or an 'orchestra_manifest' inference result to an optimal action under an explicit loss function and a hard feasibility constraint, returning the action together with a grounding label and an honest abstention when evidence is insufficient. The grounding label is combined worst-case across inputs, so a decision resting on an unverified external fact is downgraded to abstention rather than asserted with false confidence. A manifest-native tail closes an analytics pipeline by deciding directly from an upstream member's inference result, and a grade-band loss prices quality-threshold ('protein-band') payoffs as a first-class step value schedule. Reference decisions cover bounded input-rate selection and constraint-capped position sizing.
 #'
 #' @keywords internal
 "_PACKAGE"

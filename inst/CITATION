@@ -1,0 +1,21 @@
+citHeader("To cite decideR in publications, use:")
+
+note <- sprintf("R package version %s", meta$Version)
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "{decideR}: Bayesian Decision-Theoretic Actions under Loss and Hard Constraints",
+  author   = person(
+    given   = "Max",
+    family  = "Moldovan",
+    comment = c(ORCID = "0000-0001-9680-8474")
+  ),
+  year     = "2026",
+  note     = note,
+  url      = "https://github.com/max578/decideR",
+  textVersion = paste0(
+    "Moldovan, M. (2026). decideR: Bayesian Decision-Theoretic Actions under ",
+    "Loss and Hard Constraints. ", note, ". ",
+    "https://github.com/max578/decideR"
+  )
+)

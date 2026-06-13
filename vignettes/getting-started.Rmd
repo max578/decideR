@@ -136,6 +136,129 @@ candidate grid, under a feasibility constraint, with grounding and abstention.
 That is the design claim `decideR` makes concrete: one decision layer, many
 domains, and the same honesty discipline applied to a paddock and to real money.
 
+## The pipeline tail: deciding from an upstream manifest
+
+In an ORCHESTRA pipeline the yield posterior above is not assembled by hand --
+it arrives as an `orchestra_manifest` emitted by an upstream member (a PESTO
+ensemble inversion, a kernR causal test, a flexyBayes posterior).
+`decide_rate_from_manifest()` is the standard tail of that pipeline: it reads
+the predictive draws and the producer's grounding token straight off the
+manifest and closes the loop into a decision. `decideR` does not depend on the
+contract package -- the manifest is read through its public properties
+(`outputs`, `metadata`, `summary`), so the tail consumes any conforming
+producer rather than special-casing each one.
+
+```{r}
+# In production the manifest is a real `orchestra_manifest` S7 object from the
+# composition layer. For a self-contained vignette we build a minimal S7
+# stand-in carrying the same public properties the tail reads: the yield draws
+# in `outputs` (the contract's prediction slot) and the producer's grounding
+# token in `metadata$grounding`.
+vignette_manifest <- S7::new_class(
+  "vignette_manifest",
+  properties = list(
+    outputs         = S7::new_property(S7::class_any, default = NULL),
+    metadata        = S7::new_property(S7::class_list, default = list()),
+    summary         = S7::new_property(S7::class_any, default = NULL),
+    run_id          = S7::new_property(S7::class_character, default = ""),
+    emitter_package = S7::new_property(S7::class_character, default = "")
+  )
+)
+m_grounded <- vignette_manifest(
+  outputs = yield_draws,
+  metadata = list(grounding = grounding_grounded()),
+  run_id = "pesto-001", emitter_package = "PESTO"
+)
+m_ungrounded <- vignette_manifest(
+  outputs = yield_draws,
+  metadata = list(grounding = grounding_unverified()),
+  run_id = "pesto-002", emitter_package = "PESTO"
+)
+```
+
+```{r}
+d_tail <- decide_rate_from_manifest(
+  m_grounded, rates = rates, price_grain = 300, price_input = 1.2
+)
+d_tail
+d_tail@inputs$emitter_package      # provenance carried from the manifest
+```
+
+The grounding rides from the producer through the decision. A manifest whose
+payload is `[unverified]` forces the status quo -- the Independent Oracle
+Principle firewall applied at the pipeline boundary, so `decideR` never mints a
+confident rate on an upstream fact the producer did not ground.
+
+```{r}
+decide_rate_from_manifest(
+  m_ungrounded, rates = rates, price_grain = 300, price_input = 1.2
+)@abstained
+```
+
+For a fully general tail -- any candidate set, any utility -- use
+`decide_from_manifest()`, which `decide_rate_from_manifest()` wraps.
+
+## A threshold-economics loss: grade-band payoffs
+
+Many grain payoffs are not smooth in the quality they reward. A delivery is
+paid by *grade*: the price steps up as protein clears a milling threshold and
+again at a premium threshold. The value of an outcome depends on which band it
+falls in, not on its exact magnitude, so the decision is governed by the
+posterior probability of clearing each band -- not by the posterior mean. A
+half-percent of expected protein is worth a great deal near a band edge and
+nothing in the middle of a band.
+
+`grade_band_value()` makes that step payoff a first-class, reusable loss: a
+value schedule with breakpoints.
+
+```{r}
+protein_value <- grade_band_value(
+  breaks = c(11.5, 13.0),            # milling and premium protein thresholds
+  values = c(300, 360, 420)          # $/t: feed, milling, premium
+)
+protein_value
+```
+
+Now a worked grain decision. Nitrogen lifts grain protein with diminishing
+returns; the per-hectare value folds in a 5.5 t/ha yield, and nitrogen costs
+1.3 per unit rate. We hold a posterior over the base (zero-nitrogen) protein and
+choose the rate of greatest expected per-hectare value.
+
+```{r}
+qshift <- function(rate, base_protein) {
+  base_protein + 3.0 * (1 - exp(-rate / 50))    # protein response to nitrogen
+}
+yield <- 5.5
+grain_value <- function(rate, base_protein) {
+  yield * protein_value(qshift(rate, base_protein)) - 1.3 * rate
+}
+
+base_protein <- rnorm(4000L, mean = 10.6, sd = 0.5)
+rates_n <- seq(0, 150, by = 15)
+d_protein <- decide(base_protein, grain_value, candidates = rates_n,
+                    grounding = grounding_grounded(), safe_action = 0)
+d_protein
+```
+
+The decision applies enough nitrogen to pull protein reliably over the milling
+threshold -- the band premium pays for the nitrogen -- but stops short of the
+rate where the nitrogen cost outruns the premium. The threshold economics is
+visible in the candidate ledger: expected value rises steeply while the milling
+band is being secured, then flattens.
+
+```{r}
+head(d_protein@candidates)
+prot_best <- qshift(d_protein@action, base_protein)
+c(`P(>=11.5 milling)` = mean(prot_best >= 11.5),
+  `P(>=13 premium)`   = mean(prot_best >= 13.0))
+```
+
+For an action that shifts the quality outcome additively, `grade_band_utility()`
+builds the `decide()` utility directly; supply a `quality_shift` for any
+non-additive response (the saturating nitrogen response above). The grade-band
+loss is the building block the future `grainPlan` orchestrator reaches for when
+it prices a quality-graded decision.
+
 ## The abstention vocabulary
 
 A decision reports exactly why it declined, if it did. The reasons, in the order
