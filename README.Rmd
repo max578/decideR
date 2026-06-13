@@ -20,6 +20,15 @@ Oracle Principle -- rather than asserted with false confidence.
 The same engine sizes a crop nitrogen rate and a trading position, because both
 are the same problem: act under uncertainty, and refuse to act when you should.
 
+As the **tail of an ORCHESTRA pipeline** it decides directly from an upstream
+member's `orchestra_manifest` -- a PESTO inversion, a kernR causal test, a
+flexyBayes posterior -- via `decide_from_manifest()`, reading the predictive
+draws and the producer's grounding token off the contract without depending on
+the contract package. Its loss library includes a **grade-band loss**
+(`grade_band_value()`) that prices quality-threshold payoffs -- a grain price
+that steps up as protein clears a milling and a premium band -- as a first-class
+step value schedule.
+
 ## Installation
 
 ```{r eval=FALSE}
@@ -48,9 +57,15 @@ decide_input_rate(yield_draws, rates, price_grain = 300, price_input = 1.2,
 returns <- rnorm(5000L, 0.02, 0.03)
 decide_position_size(returns, capital = 1000, max_drawdown = 0.15,
                      grounding = grounding_unverified())
+
+# A quality-graded payoff: protein bands price the decision, not the mean.
+protein_value <- grade_band_value(breaks = c(11.5, 13.0),
+                                  values = c(300, 360, 420))
+protein_value
 ```
 
-See `vignette("getting-started")` for the full walk-through.
+See `vignette("getting-started")` for the full walk-through, including the
+manifest-native pipeline tail and the grade-band loss worked end to end.
 
 ## License
 

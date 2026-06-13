@@ -14,6 +14,16 @@ The same engine sizes a crop nitrogen rate and a trading position,
 because both are the same problem: act under uncertainty, and refuse to
 act when you should.
 
+As the **tail of an ORCHESTRA pipeline** it decides directly from an
+upstream member’s `orchestra_manifest` – a PESTO inversion, a kernR
+causal test, a flexyBayes posterior – via `decide_from_manifest()`,
+reading the predictive draws and the producer’s grounding token off the
+contract without depending on the contract package. Its loss library
+includes a **grade-band loss** (`grade_band_value()`) that prices
+quality-threshold payoffs – a grain price that steps up as protein
+clears a milling and a premium band – as a first-class step value
+schedule.
+
 ## Installation
 
 ``` r
@@ -50,9 +60,39 @@ decide_position_size(returns, capital = 1000, max_drawdown = 0.15,
 #> <decision> ABSTAINED (input_ungrounded)  [[unverified]]
 #>   action : flat (0%) [unverified]
 #>   candidates: 41 evaluated (method: kelly_log_growth_drawdown_capped)
+
+# A quality-graded payoff: protein bands price the decision, not the mean.
+protein_value <- grade_band_value(breaks = c(11.5, 13.0),
+                                  values = c(300, 360, 420))
+protein_value
+#> function (quality) 
+#> {
+#>     if (!is.numeric(quality)) {
+#>         stop("`quality` must be numeric", call. = FALSE)
+#>     }
+#>     idx <- findInterval(quality, breaks, left.open = right) + 
+#>         1L
+#>     out <- values[idx]
+#>     out[is.na(quality)] <- NA_real_
+#>     out
+#> }
+#> <bytecode: 0x1070d72b0>
+#> <environment: 0x1070d9cd8>
+#> attr(,"breaks")
+#> [1] 11.5 13.0
+#> attr(,"values")
+#> [1] 300 360 420
+#> attr(,"labels")
+#> [1] "[-Inf, 11.5)" "[11.5, 13)"   "[13, Inf)"   
+#> attr(,"right")
+#> [1] FALSE
+#> attr(,"class")
+#> [1] "grade_band_value" "function"
 ```
 
-See `vignette("getting-started")` for the full walk-through.
+See `vignette("getting-started")` for the full walk-through, including
+the manifest-native pipeline tail and the grade-band loss worked end to
+end.
 
 ## License
 
