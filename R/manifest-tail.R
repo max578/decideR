@@ -70,6 +70,105 @@
   grounding_unverified()
 }
 
+# The manifest tail's engine. Returns BOTH the baseline `decision` and the
+# per-draw x per-candidate utility matrix it assembled, so the exported tail
+# and the value-of-information verbs share one manifest-reading path: one
+# draws lookup, one grounding read, one provenance record, one abstention
+# ladder. `decide_from_manifest()` is the thin wrapper that keeps only the
+# decision; `decide_evpi()` / `decide_evsi()` keep the matrix as well rather
+# than rebuilding it and risking a second, divergent reader.
+.manifest_decision <- function(manifest, candidates, utility = NULL,
+                               grounding = NULL, safe_action = NULL,
+                               draws_key = "yield_draws", dots = list()) {
+  draws <- .manifest_draws(manifest, draws_key = draws_key)
+  n_cand <- length(candidates)
+  if (n_cand == 0L) {
+    stop("`candidates` must hold at least one action", call. = FALSE)
+  }
+  # A single-column draws matrix (a posterior over one latent state -- the
+  # shape a flexyBayes posterior or a bare kernR test statistic arrives in,
+  # not a per-candidate outcome grid) is a valid input when `utility` does the
+  # indexing: `utility(candidates[[j]], draws[, 1])` recycles the one posterior
+  # column across every candidate, exactly the shape `decide()` itself takes.
+  # Any other column count that does not match `candidates` is a genuine
+  # mismatch and still stops.
+  recycled_single_column <- ncol(draws) == 1L && n_cand > 1L
+  if (!recycled_single_column && ncol(draws) != n_cand) {
+    stop(
+      sprintf(
+        "manifest draws have %d columns but `candidates` has %d actions",
+        ncol(draws), n_cand
+      ),
+      call. = FALSE
+    )
+  }
+  if (recycled_single_column && is.null(utility)) {
+    stop(
+      "manifest draws have a single column and `utility` is NULL -- a ",
+      "single posterior column has no per-candidate utility to read ",
+      "directly; supply `utility = function(action, draws_column)`",
+      call. = FALSE
+    )
+  }
+
+  # Provenance: carry the producer's grounding worst-case unless the caller
+  # overrides, and record the manifest identity in the decision's inputs.
+  g <- if (is.null(grounding)) .manifest_grounding(manifest) else grounding
+  g <- combine_grounding(g)
+  inputs <- list(
+    manifest_run_id  = .manifest_prop(manifest, "run_id", default = NA_character_),
+    emitter_package  = .manifest_prop(manifest, "emitter_package",
+                                      default = NA_character_)
+  )
+
+  # Assemble the per-draw, per-candidate utility matrix. When `utility` is NULL
+  # each manifest column is taken as the candidate's utility directly (a
+  # producer that already evaluated the loss); otherwise the column is the
+  # posterior draws fed to the utility for that candidate.
+  util_matrix <- if (is.null(utility)) {
+    draws
+  } else {
+    if (!is.function(utility)) {
+      stop("`utility` must be NULL or a function of (action, draws_column)",
+           call. = FALSE)
+    }
+    vapply(
+      seq_len(n_cand),
+      function(j) {
+        draws_col <- if (recycled_single_column) draws[, 1L] else draws[, j]
+        u <- utility(candidates[[j]], draws_col)
+        if (length(u) != nrow(draws)) {
+          stop("`utility` must return one value per draw", call. = FALSE)
+        }
+        as.numeric(u)
+      },
+      numeric(nrow(draws))
+    )
+  }
+
+  labels <- as.character(candidates)
+  if (is.null(safe_action)) {
+    safe_action <- candidates[[1L]]
+  }
+  d <- .decide_core(
+    util_matrix   = util_matrix,
+    candidates    = candidates,
+    labels        = labels,
+    constraint    = dots[["constraint"]],
+    grounding     = g,
+    safe_action   = safe_action,
+    safe_label    = dots[["safe_label"]] %||% "abstain (status quo)",
+    min_ess       = dots[["min_ess"]],
+    ess           = dots[["ess"]],
+    decisive_prob = dots[["decisive_prob"]] %||% 0.6,
+    method        = dots[["method"]] %||% "manifest_expected_utility",
+    inputs        = inputs,
+    metadata      = dots[["metadata"]] %||% list()
+  )
+  list(decision = d, util_matrix = util_matrix, candidates = candidates,
+       grounding = g, inputs = inputs, draws = draws)
+}
+
 # -----------------------------------------------------------------------------
 # Exported manifest tail
 # -----------------------------------------------------------------------------
@@ -149,92 +248,11 @@
 decide_from_manifest <- function(manifest, candidates, utility = NULL,
                                  grounding = NULL, safe_action = NULL,
                                  draws_key = "yield_draws", ...) {
-  draws <- .manifest_draws(manifest, draws_key = draws_key)
-  n_cand <- length(candidates)
-  if (n_cand == 0L) {
-    stop("`candidates` must hold at least one action", call. = FALSE)
-  }
-  # A single-column draws matrix (a posterior over one latent state -- the
-  # shape a flexyBayes posterior or a bare kernR test statistic arrives in,
-  # not a per-candidate outcome grid) is a valid input when `utility` does the
-  # indexing: `utility(candidates[[j]], draws[, 1])` recycles the one posterior
-  # column across every candidate, exactly the shape `decide()` itself takes.
-  # Any other column count that does not match `candidates` is a genuine
-  # mismatch and still stops.
-  recycled_single_column <- ncol(draws) == 1L && n_cand > 1L
-  if (!recycled_single_column && ncol(draws) != n_cand) {
-    stop(
-      sprintf(
-        "manifest draws have %d columns but `candidates` has %d actions",
-        ncol(draws), n_cand
-      ),
-      call. = FALSE
-    )
-  }
-  if (recycled_single_column && is.null(utility)) {
-    stop(
-      "manifest draws have a single column and `utility` is NULL -- a ",
-      "single posterior column has no per-candidate utility to read ",
-      "directly; supply `utility = function(action, draws_column)`",
-      call. = FALSE
-    )
-  }
-
-  # Provenance: carry the producer's grounding worst-case unless the caller
-  # overrides, and record the manifest identity in the decision's inputs.
-  g <- if (is.null(grounding)) .manifest_grounding(manifest) else grounding
-  g <- combine_grounding(g)
-  inputs <- list(
-    manifest_run_id  = .manifest_prop(manifest, "run_id", default = NA_character_),
-    emitter_package  = .manifest_prop(manifest, "emitter_package",
-                                      default = NA_character_)
-  )
-
-  # Assemble the per-draw, per-candidate utility matrix. When `utility` is NULL
-  # each manifest column is taken as the candidate's utility directly (a
-  # producer that already evaluated the loss); otherwise the column is the
-  # posterior draws fed to the utility for that candidate.
-  util_matrix <- if (is.null(utility)) {
-    draws
-  } else {
-    if (!is.function(utility)) {
-      stop("`utility` must be NULL or a function of (action, draws_column)",
-           call. = FALSE)
-    }
-    vapply(
-      seq_len(n_cand),
-      function(j) {
-        draws_col <- if (recycled_single_column) draws[, 1L] else draws[, j]
-        u <- utility(candidates[[j]], draws_col)
-        if (length(u) != nrow(draws)) {
-          stop("`utility` must return one value per draw", call. = FALSE)
-        }
-        as.numeric(u)
-      },
-      numeric(nrow(draws))
-    )
-  }
-
-  labels <- as.character(candidates)
-  if (is.null(safe_action)) {
-    safe_action <- candidates[[1L]]
-  }
-  dots <- list(...)
-  .decide_core(
-    util_matrix   = util_matrix,
-    candidates    = candidates,
-    labels        = labels,
-    constraint    = dots[["constraint"]],
-    grounding     = g,
-    safe_action   = safe_action,
-    safe_label    = dots[["safe_label"]] %||% "abstain (status quo)",
-    min_ess       = dots[["min_ess"]],
-    ess           = dots[["ess"]],
-    decisive_prob = dots[["decisive_prob"]] %||% 0.6,
-    method        = dots[["method"]] %||% "manifest_expected_utility",
-    inputs        = inputs,
-    metadata      = dots[["metadata"]] %||% list()
-  )
+  .manifest_decision(
+    manifest = manifest, candidates = candidates, utility = utility,
+    grounding = grounding, safe_action = safe_action,
+    draws_key = draws_key, dots = list(...)
+  )$decision
 }
 
 #' Choose a crop input rate from an upstream yield manifest
