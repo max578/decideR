@@ -24,8 +24,8 @@ freely when the draws are a single posterior vector.}
 
 \item{utility}{A function \verb{function(action, draws_column)} returning a numeric
 utility per draw, or \code{NULL} to treat each manifest column as the utility of
-the corresponding candidate directly (the case a producer has already
-evaluated the loss per candidate).}
+the corresponding candidate directly (the case in which a producer has
+already evaluated the loss per candidate).}
 
 \item{grounding}{Optional override for the manifest's own grounding token;
 defaults to the token the manifest carries, read worst-case.}

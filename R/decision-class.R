@@ -109,12 +109,18 @@ decision <- S7::new_class(
 
 #' Is a decision grounded?
 #'
-#' A convenience predicate reading the decision's grounding label. A consumer
-#' that must refuse to act on un-grounded evidence -- for example a live
-#' trading order path -- gates on this.
+#' A convenience predicate reading the decision's grounding label. It reports
+#' only the grounding of the evidence, not whether the decision abstained --
+#' `is_grounded()` is `TRUE` for an abstained decision whenever the abstention
+#' reason was `no_feasible_action`, `low_ess`, or `insufficient_evidence`,
+#' since none of those reasons downgrades the grounding label itself. A
+#' consumer that must refuse to act on either un-grounded evidence or an
+#' abstained decision -- for example a live trading order path -- gates on
+#' `is_grounded(x) && !x@abstained`, not on `is_grounded()` alone.
 #'
 #' @param x A `decision`.
 #' @return `TRUE` when the decision's grounding is `grounding_grounded()`.
+#'   This does not imply the decision was not abstained; see Details.
 #' @examples
 #' is_grounded(decision(grounding = grounding_grounded()))
 #' is_grounded(decision(grounding = grounding_unverified()))

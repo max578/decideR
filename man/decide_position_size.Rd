@@ -53,7 +53,8 @@ the implied dollar position is in \verb{@metadata$position}.
 \description{
 A reference decision for the trading domain. Given predictive draws of the
 next-period simple return, it chooses the fraction of capital that maximises
-expected log-growth \eqn{E[\log(1 + f\,r)]} (the Kelly objective) over a grid
+expected log-growth \eqn{E[\log(1 + f\,r)]} (the Kelly objective; Kelly, 1956)
+over a grid
 bounded by \code{kelly_cap}, subject to a hard one-period loss-quantile
 constraint: a fraction is feasible only if its \code{loss_quantile} return
 quantile is no worse than \code{-max_drawdown}. \strong{This guard is a single-period
@@ -72,6 +73,10 @@ set.seed(1L)
 r <- 0.004 + 0.02 * rt(4000L, df = 4) / sqrt(2)
 decide_position_size(r, capital = 1000, max_drawdown = 0.15,
                      grounding = grounding_grounded())
+}
+\references{
+Kelly, J. L. (1956). A New Interpretation of Information Rate.
+\emph{Bell System Technical Journal}, 35(4), 917-926.
 }
 \seealso{
 \code{\link[=decide]{decide()}} for the underlying engine; \code{\link[=decide_input_rate]{decide_input_rate()}} for the

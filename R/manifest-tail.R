@@ -103,8 +103,8 @@
 #'   freely when the draws are a single posterior vector.
 #' @param utility A function `function(action, draws_column)` returning a numeric
 #'   utility per draw, or `NULL` to treat each manifest column as the utility of
-#'   the corresponding candidate directly (the case a producer has already
-#'   evaluated the loss per candidate).
+#'   the corresponding candidate directly (the case in which a producer has
+#'   already evaluated the loss per candidate).
 #' @param grounding Optional override for the manifest's own grounding token;
 #'   defaults to the token the manifest carries, read worst-case.
 #' @param safe_action The action returned on abstention; defaults to the first
