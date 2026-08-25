@@ -32,8 +32,8 @@ refuse to act when the evidence will not support it.
 Two principles separate `decideR` from a bare `which.max`:
 
 1. **Calibrated abstention.** A decision may decline to move off a safe fallback
-   action when the evidence is too thin, too few, or not clearly better than the
-   status quo. Abstention is a first-class outcome, recorded with a reason.
+   action when the evidence is too thin, too sparse, or not clearly better than
+   the status quo. Abstention is a first-class outcome, recorded with a reason.
 2. **The Independent Oracle Principle (IOP).** Every decision carries a
    *grounding* label, combined worst-case from its inputs. A decision built on a
    fact that has not been checked against the external authority that owns it is
@@ -69,6 +69,22 @@ appendix:
 ```{r}
 head(d_crop@candidates)
 ```
+
+```{r fig-crop-ledger, fig.cap = "Expected profit against candidate nitrogen rate, with the chosen rate marked. The curve rises steeply at low rates, where nitrogen is well below the point of diminishing yield response, then flattens and turns down once the input cost outweighs the marginal yield gain -- the chosen action sits at the turning point, not at the highest rate on the grid."}
+with(d_crop@candidates, {
+  plot(action, expected_utility, type = "b", pch = 16,
+       xlab = "Nitrogen rate (kg/ha)", ylab = "Expected profit ($/ha)",
+       main = "Candidate ledger: nitrogen rate")
+  abline(v = d_crop@action, lty = 2, col = "firebrick")
+  text(d_crop@action, min(expected_utility),
+       paste0("chosen: ", d_crop@action), pos = 4, col = "firebrick")
+})
+```
+
+The figure makes the same point as the printed decision, visually: the chosen
+rate is the peak of the expected-profit curve over the candidate grid, not an
+extreme of it, and every candidate the engine rejected is still visible for
+inspection rather than discarded.
 
 ### What happens when the yield evidence is not grounded
 
@@ -242,15 +258,33 @@ d_protein
 
 The decision applies enough nitrogen to pull protein reliably over the milling
 threshold -- the band premium pays for the nitrogen -- but stops short of the
-rate where the nitrogen cost outruns the premium. The threshold economics is
-visible in the candidate ledger: expected value rises steeply while the milling
-band is being secured, then flattens.
+rate where the nitrogen cost outruns the premium. The threshold economics show
+up in the candidate ledger: expected value rises steeply while the milling band
+is being secured, then flattens.
 
 ```{r}
 head(d_protein@candidates)
 prot_best <- qshift(d_protein@action, base_protein)
 c(`P(>=11.5 milling)` = mean(prot_best >= 11.5),
   `P(>=13 premium)`   = mean(prot_best >= 13.0))
+```
+
+```{r fig-grade-band, fig.cap = "The grade-band step schedule (dollars per tonne, left axis, in grey) against protein, with the posterior density of protein at the chosen nitrogen rate overlaid (right axis, in blue). Most of the posterior mass now sits at or past the milling step, which is why the engine pays for the nitrogen: it is buying probability of clearing the step, not moving the mean protein a little."}
+breaks <- attr(protein_value, "breaks")
+values <- attr(protein_value, "values")
+band_x <- c(min(prot_best) - 0.5, breaks, max(prot_best) + 0.5)
+op <- par(mar = c(4, 4, 3, 4) + 0.1)
+plot(band_x, c(values, values[length(values)]), type = "s", lwd = 2,
+     col = "grey40", xlab = "Protein (%)", ylab = "Grade-band value ($/t)",
+     main = "Grade-band schedule and posterior at chosen rate")
+abline(v = breaks, lty = 3, col = "grey60")
+dens <- density(prot_best)
+par(new = TRUE)
+plot(dens$x, dens$y, type = "l", col = "steelblue", lwd = 2,
+     axes = FALSE, xlab = "", ylab = "")
+axis(4, col = "steelblue", col.axis = "steelblue")
+mtext("Posterior density of protein", side = 4, line = 2.5, col = "steelblue")
+par(op)
 ```
 
 For an action that shifts the quality outcome additively, `grade_band_utility()`
@@ -268,9 +302,18 @@ they are checked:
 |---|---|
 | `input_ungrounded` | An input fact is `[unverified]` (the IOP firewall). |
 | `no_feasible_action` | No candidate satisfies the constraint. |
-| `low_ess` | The effective sample size is below the floor. |
+| `low_ess` | The effective sample size is below the floor (opt-in -- see below). |
 | `insufficient_evidence` | The best action does not clearly beat the status quo. |
+| `degenerate_utility` | Every feasible candidate's expected utility is `NA`/`NaN`. |
 
-In every case the returned `action` is the caller's `safe_action`, and
-`is_grounded()` reports whether the decision rests on grounded evidence -- the
-single predicate a downstream consumer (for example a live order path) gates on.
+`low_ess` is opt-in: it never fires unless the caller supplies `min_ess`, since
+there is no universal effective-sample-size floor a decision-agnostic engine can
+default to.
+
+In every case the returned `action` is the caller's `safe_action`. `is_grounded()`
+reports only whether the underlying evidence is grounded -- it is `TRUE` even for
+a decision that abstained for `no_feasible_action`, `low_ess`, or
+`insufficient_evidence`, since none of those reasons touches the grounding label.
+A downstream consumer that must refuse to act on either un-grounded evidence or
+an abstained decision -- for example a live order path -- gates on
+`is_grounded(d) && !d@abstained`.

@@ -16,6 +16,13 @@ test_that("grade_band_value honours the right-closed convention", {
   expect_identical(v(c(10.5, 11.5, 13.0)), c(300, 330, 360))
 })
 
+test_that("print.grade_band_value dispatches to the band table (D-03)", {
+  v <- grade_band_value(c(10.5, 11.5), c(300, 330, 360))
+  out <- capture.output(print(v))
+  expect_match(out[1L], "<grade_band_value> 3 bands", fixed = TRUE)
+  expect_true(any(grepl("330", out)))
+})
+
 test_that("grade_band_value propagates NA and carries the schedule", {
   v <- grade_band_value(c(11.5), c(300, 360))
   expect_identical(v(c(11.0, NA, 12.0)), c(300, NA, 360))

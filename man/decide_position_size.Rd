@@ -2,7 +2,8 @@
 % Please edit documentation in R/reference-decisions.R
 \name{decide_position_size}
 \alias{decide_position_size}
-\title{Size a trading position by capped expected log-growth under a drawdown limit}
+\title{Size a trading position by capped expected log-growth under a loss-quantile
+limit}
 \usage{
 decide_position_size(
   return_draws,
@@ -22,13 +23,16 @@ decide_position_size(
 \item{capital}{The capital available; the dollar position is
 \code{fraction * capital}.}
 
-\item{max_drawdown}{The hard fractional drawdown cap (e.g. \code{0.15}).}
+\item{max_drawdown}{The hard one-period loss-quantile cap (e.g. \code{0.15}) --
+a value-at-risk floor on the \emph{next-period} return, not a multi-period
+peak-to-trough drawdown.}
 
 \item{kelly_cap}{The maximum fraction of capital (a fractional-Kelly ceiling).}
 
 \item{n_grid}{The number of fractions evaluated on \verb{[0, kelly_cap]}.}
 
-\item{loss_quantile}{The lower return quantile the drawdown constraint guards.}
+\item{loss_quantile}{The lower return quantile the \code{max_drawdown} guard is
+evaluated at.}
 
 \item{grounding}{One or more grounding tokens for the return evidence;
 combined worst-case.}
@@ -36,7 +40,11 @@ combined worst-case.}
 \item{decisive_prob}{Minimum posterior probability that the leading fraction
 is best (see \code{\link[=decide]{decide()}}).}
 
-\item{...}{Further arguments passed to the decision core (e.g. \code{min_ess}).}
+\item{...}{Further arguments passed to the decision core: \code{min_ess}, \code{ess},
+\code{constraint} (a \verb{function(fraction)} feasibility check, ANDed onto the
+hard drawdown constraint -- it can only tighten feasibility, never
+loosen it), \code{safe_label}, \code{method}, \code{metadata}, \code{inputs}. Any other name
+stops with an error rather than being silently discarded.}
 }
 \value{
 A \link{decision} object whose \code{action} is the chosen fraction of capital;
@@ -45,13 +53,19 @@ the implied dollar position is in \verb{@metadata$position}.
 \description{
 A reference decision for the trading domain. Given predictive draws of the
 next-period simple return, it chooses the fraction of capital that maximises
-expected log-growth \eqn{E[\log(1 + f\,r)]} (the Kelly objective) over a grid
-bounded by \code{kelly_cap}, subject to a hard drawdown constraint: a fraction is
-feasible only if its \code{loss_quantile} return quantile is no worse than
-\code{-max_drawdown}. With no edge the grid maximiser is naturally flat; with an
-edge the drawdown constraint caps the size. It abstains to flat (\code{0}) when the
-return evidence is un-grounded -- the capital firewall: never stake real money
-on a market fact that has not been verified against the exchange.
+expected log-growth \eqn{E[\log(1 + f\,r)]} (the Kelly objective; Kelly, 1956)
+over a grid
+bounded by \code{kelly_cap}, subject to a hard one-period loss-quantile
+constraint: a fraction is feasible only if its \code{loss_quantile} return
+quantile is no worse than \code{-max_drawdown}. \strong{This guard is a single-period
+value-at-risk floor, not a path drawdown} -- \code{max_drawdown} names the worst
+\code{loss_quantile}-fraction of \emph{next-period} returns the position may be
+exposed to, not a peak-to-trough statistic accumulated over a trading path;
+a true multi-period drawdown limit is not computed here. With no edge the
+grid maximiser is naturally flat; with an edge the constraint caps the size.
+It abstains to flat (\code{0}) when the return evidence is un-grounded -- the
+capital firewall: never stake real money on a market fact that has not been
+verified against the exchange.
 }
 \examples{
 set.seed(1L)
@@ -59,6 +73,10 @@ set.seed(1L)
 r <- 0.004 + 0.02 * rt(4000L, df = 4) / sqrt(2)
 decide_position_size(r, capital = 1000, max_drawdown = 0.15,
                      grounding = grounding_grounded())
+}
+\references{
+Kelly, J. L. (1956). A New Interpretation of Information Rate.
+\emph{Bell System Technical Journal}, 35(4), 917-926.
 }
 \seealso{
 \code{\link[=decide]{decide()}} for the underlying engine; \code{\link[=decide_input_rate]{decide_input_rate()}} for the

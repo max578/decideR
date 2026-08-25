@@ -1,5 +1,7 @@
 ---
-output: github_document
+output:
+  github_document:
+    md_extensions: -smart
 ---
 
 ```{r, include = FALSE}
@@ -18,7 +20,8 @@ on an unverified external fact is downgraded to abstention -- the Independent
 Oracle Principle -- rather than asserted with false confidence.
 
 The same engine sizes a crop nitrogen rate and a trading position, because both
-are the same problem: act under uncertainty, and refuse to act when you should.
+are the same problem: act under uncertainty, and refuse to act when the
+evidence will not support it.
 
 As the **tail of an ORCHESTRA pipeline** it decides directly from an upstream
 member's `orchestra_manifest` -- a PESTO inversion, a kernR causal test, a

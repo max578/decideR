@@ -82,14 +82,45 @@ decision <- S7::new_class(
   }
 )
 
+# -----------------------------------------------------------------------------
+# ORCHESTRA cross-member refusal/abstention contract
+# -----------------------------------------------------------------------------
+# The federation's leader-side predicate `is_orchestra_decline()`
+# (`ORCHESTRA_dev/integration/refusal_contract.R`) recognises a member's
+# decline producer-agnostically by a naming convention on the RETURNED
+# OBJECT's `class()` vector: a structured refusal ends in `_refusal`, a
+# structured abstention ends in `_abstention`. A `decision` on its own only
+# carries the S7 class chain (`c("decideR::decision", "S7_object")`), which
+# does not match either suffix -- an abstained decideR decision would
+# therefore be invisible to a cross-member gate built on that predicate.
+# `.stamp_abstention_class()` prepends `"decideR_abstention"` onto an
+# abstained decision's class vector so it is recognised without decideR
+# depending on the contract layer, exactly the composition-layer convention
+# the manifest tail already uses for the S7 duck-typed read. Prepending (not
+# replacing) preserves S7 property access and S7 method dispatch (verified:
+# `@` access and the registered `print` method both keep working with the
+# extra class present).
+.stamp_abstention_class <- function(x) {
+  if (isTRUE(x@abstained) && !any(class(x) == "decideR_abstention")) {
+    class(x) <- c("decideR_abstention", class(x))
+  }
+  x
+}
+
 #' Is a decision grounded?
 #'
-#' A convenience predicate reading the decision's grounding label. A consumer
-#' that must refuse to act on un-grounded evidence -- for example a live
-#' trading order path -- gates on this.
+#' A convenience predicate reading the decision's grounding label. It reports
+#' only the grounding of the evidence, not whether the decision abstained --
+#' `is_grounded()` is `TRUE` for an abstained decision whenever the abstention
+#' reason was `no_feasible_action`, `low_ess`, or `insufficient_evidence`,
+#' since none of those reasons downgrades the grounding label itself. A
+#' consumer that must refuse to act on either un-grounded evidence or an
+#' abstained decision -- for example a live trading order path -- gates on
+#' `is_grounded(x) && !x@abstained`, not on `is_grounded()` alone.
 #'
 #' @param x A `decision`.
 #' @return `TRUE` when the decision's grounding is `grounding_grounded()`.
+#'   This does not imply the decision was not abstained; see Details.
 #' @examples
 #' is_grounded(decision(grounding = grounding_grounded()))
 #' is_grounded(decision(grounding = grounding_unverified()))

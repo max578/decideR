@@ -7,21 +7,21 @@ explicit utility and a hard feasibility constraint, returning the action
 together with a grounding label and an honest abstention when the
 evidence will not support a decision. The grounding label is combined
 worst-case across inputs, so a decision resting on an unverified
-external fact is downgraded to abstention – the Independent Oracle
-Principle – rather than asserted with false confidence.
+external fact is downgraded to abstention -- the Independent Oracle
+Principle -- rather than asserted with false confidence.
 
 The same engine sizes a crop nitrogen rate and a trading position,
 because both are the same problem: act under uncertainty, and refuse to
-act when you should.
+act when the evidence will not support it.
 
 As the **tail of an ORCHESTRA pipeline** it decides directly from an
-upstream member’s `orchestra_manifest` – a PESTO inversion, a kernR
-causal test, a flexyBayes posterior – via `decide_from_manifest()`,
-reading the predictive draws and the producer’s grounding token off the
+upstream member's `orchestra_manifest` -- a PESTO inversion, a kernR
+causal test, a flexyBayes posterior -- via `decide_from_manifest()`,
+reading the predictive draws and the producer's grounding token off the
 contract without depending on the contract package. Its loss library
 includes a **grade-band loss** (`grade_band_value()`) that prices
-quality-threshold payoffs – a grain price that steps up as protein
-clears a milling and a premium band – as a first-class step value
+quality-threshold payoffs -- a grain price that steps up as protein
+clears a milling and a premium band -- as a first-class step value
 schedule.
 
 ## Installation
@@ -65,29 +65,11 @@ decide_position_size(returns, capital = 1000, max_drawdown = 0.15,
 protein_value <- grade_band_value(breaks = c(11.5, 13.0),
                                   values = c(300, 360, 420))
 protein_value
-#> function (quality) 
-#> {
-#>     if (!is.numeric(quality)) {
-#>         stop("`quality` must be numeric", call. = FALSE)
-#>     }
-#>     idx <- findInterval(quality, breaks, left.open = right) + 
-#>         1L
-#>     out <- values[idx]
-#>     out[is.na(quality)] <- NA_real_
-#>     out
-#> }
-#> <bytecode: 0x1070d72b0>
-#> <environment: 0x1070d9cd8>
-#> attr(,"breaks")
-#> [1] 11.5 13.0
-#> attr(,"values")
-#> [1] 300 360 420
-#> attr(,"labels")
-#> [1] "[-Inf, 11.5)" "[11.5, 13)"   "[13, Inf)"   
-#> attr(,"right")
-#> [1] FALSE
-#> attr(,"class")
-#> [1] "grade_band_value" "function"
+#> <grade_band_value> 3 bands
+#>          band value
+#>  [-Inf, 11.5)   300
+#>    [11.5, 13)   360
+#>     [13, Inf)   420
 ```
 
 See `vignette("getting-started")` for the full walk-through, including

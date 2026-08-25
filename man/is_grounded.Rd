@@ -11,11 +11,17 @@ is_grounded(x)
 }
 \value{
 \code{TRUE} when the decision's grounding is \code{grounding_grounded()}.
+This does not imply the decision was not abstained; see Details.
 }
 \description{
-A convenience predicate reading the decision's grounding label. A consumer
-that must refuse to act on un-grounded evidence -- for example a live
-trading order path -- gates on this.
+A convenience predicate reading the decision's grounding label. It reports
+only the grounding of the evidence, not whether the decision abstained --
+\code{is_grounded()} is \code{TRUE} for an abstained decision whenever the abstention
+reason was \code{no_feasible_action}, \code{low_ess}, or \code{insufficient_evidence},
+since none of those reasons downgrades the grounding label itself. A
+consumer that must refuse to act on either un-grounded evidence or an
+abstained decision -- for example a live trading order path -- gates on
+\code{is_grounded(x) && !x@abstained}, not on \code{is_grounded()} alone.
 }
 \examples{
 is_grounded(decision(grounding = grounding_grounded()))

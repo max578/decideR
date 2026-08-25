@@ -2,9 +2,26 @@ url: https://max578.github.io/decideR
 template:
   bootstrap: 5
 reference:
-  - title: Functions
+  - title: Decisions
+    desc: >
+      The core engine and the two reference decisions built on it.
     contents:
-      - matches(".*")
+      - has_concept("decisions")
+  - title: Manifest tail
+    desc: >
+      Deciding directly from an upstream `orchestra_manifest`.
+    contents:
+      - has_concept("manifest")
+  - title: Grounding
+    desc: >
+      The Independent Oracle Principle provenance vocabulary.
+    contents:
+      - has_concept("grounding")
+  - title: Loss
+    desc: >
+      Threshold-economics (grade-band) loss primitives.
+    contents:
+      - has_concept("loss")
 articles:
   - title: Articles
     navbar: ~

@@ -111,6 +111,38 @@ test_that("the tail errors on a manifest with no draws and on a length mismatch"
                "columns but")
 })
 
+test_that("a single-column manifest recycles across candidates when utility indexes it (D-06)", {
+  # The shape a flexyBayes posterior arrives in: one posterior column, not a
+  # per-candidate outcome grid.
+  set.seed(3L)
+  theta <- rnorm(2000L, mean = 1.5, sd = 0.4)
+  m <- .fake_manifest(outputs = matrix(theta, ncol = 1L),
+                      metadata = list(grounding = grounding_grounded()))
+  d <- decide_from_manifest(m, candidates = seq(0, 3, by = 0.5),
+                            utility = function(a, th) -(a - th)^2,
+                            safe_action = 0)
+  expect_false(d@abstained)
+  expect_equal(d@action, 1.5, tolerance = 0.5)
+})
+
+test_that("a single-column manifest with utility = NULL still errors (no per-candidate data)", {
+  m <- .fake_manifest(outputs = matrix(rnorm(300L), ncol = 1L),
+                      metadata = list(grounding = grounding_grounded()))
+  expect_error(
+    decide_from_manifest(m, candidates = c(1, 2, 3), utility = NULL),
+    "single posterior column"
+  )
+})
+
+test_that("decide_from_manifest's abstention also carries the refusal-contract class", {
+  m <- .yield_manifest(grounding_unverified())
+  d <- decide_from_manifest(m, candidates = seq(0, 200, by = 25),
+                            utility = function(r, y) 300 * y - 1.2 * r,
+                            safe_action = 0)
+  expect_true(d@abstained)
+  expect_true(any(grepl("_(refusal|abstention)$", class(d))))
+})
+
 test_that("a manifest with no grounding token defaults to un-grounded (honest IOP)", {
   m <- .fake_manifest(
     outputs = matrix(stats::rnorm(300L), nrow = 100L, ncol = 3L),

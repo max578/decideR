@@ -35,7 +35,10 @@ no-input status quo).}
 \item{decisive_prob}{Minimum posterior probability that the leading rate is
 best (see \code{\link[=decide]{decide()}}).}
 
-\item{...}{Further arguments passed to the decision core (e.g. \code{min_ess}).}
+\item{...}{Further arguments passed to the decision core: \code{min_ess}, \code{ess},
+\code{constraint} (a \verb{function(rate)} feasibility check), \code{safe_label},
+\code{method}, \code{metadata}, \code{inputs}. Any other name stops with an error rather
+than being silently discarded.}
 }
 \value{
 A \link{decision} object whose \code{action} is the chosen rate.

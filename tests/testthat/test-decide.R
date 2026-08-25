@@ -69,6 +69,76 @@ test_that("low effective sample size abstains", {
   expect_identical(d@abstain_reason, "low_ess")
 })
 
+test_that("low_ess is opt-in: a default call with three draws still decides (D-05)", {
+  # `min_ess` defaults to NULL, so the ESS floor is off unless the caller
+  # supplies one -- documented behaviour, pinned here so a change to the
+  # default is a deliberate, test-visible decision.
+  set.seed(9L)
+  theta <- rnorm(3L, mean = 1.5, sd = 0.01)
+  u <- function(a, theta) -(a - theta)^2
+  d <- decide(theta, u, candidates = seq(0, 3, by = 0.5),
+              grounding = grounding_grounded(), safe_action = 0)
+  expect_false(d@abstained)
+  expect_true(is.na(d@abstain_reason))
+})
+
+test_that("degenerate (all-NA/NaN) expected utility abstains rather than erroring (D-04)", {
+  d <- decide(rnorm(100L), function(a, theta) rep(NaN, length(theta)),
+              candidates = c(0, 1), grounding = grounding_grounded(),
+              safe_action = 0)
+  expect_true(d@abstained)
+  expect_identical(d@abstain_reason, "degenerate_utility")
+  expect_identical(d@action, 0)
+})
+
+test_that("the decisiveness gate fires for a categorical candidate set (D-01)", {
+  # A weak, near-zero signal should abstain regardless of whether `safe_action`
+  # happens to sit on the numeric candidate grid: `candidates = c(1, 2)` has no
+  # slot for `safe_action = 0`, which used to disable the gate entirely
+  # (`.match_candidate()` returns NA for an off-grid numeric action just as it
+  # does for a categorical/list action set).
+  set.seed(1L)
+  theta <- rnorm(4000L, mean = 0.3, sd = 3)          # P(theta > 0) ~ 0.54
+  u <- function(a, theta) a * theta
+  d_on_grid  <- decide(theta, u, candidates = c(0, 1), safe_action = 0,
+                       grounding = grounding_grounded())
+  d_off_grid <- decide(theta, u, candidates = c(1, 2), safe_action = 0,
+                       grounding = grounding_grounded())
+  expect_true(d_on_grid@abstained)
+  expect_true(d_off_grid@abstained)                  # previously FALSE (D-01)
+  expect_identical(d_off_grid@abstain_reason, "insufficient_evidence")
+
+  # Categorical (list) candidates route through the identical fallback and must
+  # still decide confidently when the evidence is overwhelming.
+  set.seed(11L)
+  theta2 <- rnorm(4000L, mean = 5, sd = 0.5)         # P(theta2 > 0) ~ 1
+  d_categorical <- decide(theta2, u, candidates = list(0, 1), safe_action = 0,
+                          grounding = grounding_grounded())
+  expect_false(d_categorical@abstained)
+})
+
+test_that("an abstained decision carries the ORCHESTRA refusal-contract class", {
+  # The federation's leader-side `is_orchestra_decline()` predicate
+  # (ORCHESTRA_dev/integration/refusal_contract.R) recognises a decline by a
+  # `class()` suffix convention (`_refusal` / `_abstention`), independent of
+  # any particular member's namespace. A decided (non-abstained) `decision`
+  # must NOT carry the marker.
+  set.seed(2L)
+  theta <- rnorm(2000L, 1.5, 0.3)
+  u <- function(a, theta) -(a - theta)^2
+  d_abstained <- decide(theta, u, candidates = seq(0, 3, by = 0.5),
+                       grounding = grounding_unverified(), safe_action = 0)
+  d_decided <- decide(theta, u, candidates = seq(0, 3, by = 0.5),
+                      grounding = grounding_grounded(), safe_action = 0)
+  expect_true(d_abstained@abstained)
+  expect_true(any(grepl("_(refusal|abstention)$", class(d_abstained))))
+  expect_false(d_decided@abstained)
+  expect_false(any(grepl("_(refusal|abstention)$", class(d_decided))))
+  # `@` property access and S7 dispatch survive the extra class tag.
+  expect_identical(d_abstained@abstain_reason, "input_ungrounded")
+  expect_output(print(d_abstained), "ABSTAINED")
+})
+
 test_that("the candidate ledger records every action's expected utility", {
   set.seed(7L)
   theta <- rnorm(1500L, 1.5, 0.3)

@@ -103,8 +103,8 @@
 #'   freely when the draws are a single posterior vector.
 #' @param utility A function `function(action, draws_column)` returning a numeric
 #'   utility per draw, or `NULL` to treat each manifest column as the utility of
-#'   the corresponding candidate directly (the case a producer has already
-#'   evaluated the loss per candidate).
+#'   the corresponding candidate directly (the case in which a producer has
+#'   already evaluated the loss per candidate).
 #' @param grounding Optional override for the manifest's own grounding token;
 #'   defaults to the token the manifest carries, read worst-case.
 #' @param safe_action The action returned on abstention; defaults to the first
@@ -118,20 +118,30 @@
 #' @examples
 #' set.seed(1L)
 #' rates <- seq(0, 200, by = 25)
-#' # a manifest-shaped object: yield draws per rate in `metadata$yield_draws`
+#' # In production the manifest is a real `orchestra_manifest` S7 object from
+#' # the composition layer. Here, a minimal S7 stand-in carrying the same
+#' # public properties the tail reads (`outputs`, `metadata`, `summary`,
+#' # `run_id`, `emitter_package`) -- an S3 list is NOT readable by the tail,
+#' # which duck-types through S7 property access.
+#' demo_manifest <- S7::new_class(
+#'   "demo_manifest",
+#'   properties = list(
+#'     outputs         = S7::new_property(S7::class_any, default = NULL),
+#'     metadata        = S7::new_property(S7::class_list, default = list()),
+#'     summary         = S7::new_property(S7::class_any, default = NULL),
+#'     run_id          = S7::new_property(S7::class_character, default = ""),
+#'     emitter_package = S7::new_property(S7::class_character, default = "")
+#'   )
+#' )
 #' ymax <- rnorm(1500L, 5.5, 0.3)
 #' yld  <- vapply(rates,
 #'                function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)),
 #'                numeric(1500L))
-#' fake_manifest <- structure(
-#'   list(metadata = list(yield_draws = yld, grounding = grounding_grounded())),
-#'   class = "demo_manifest"
+#' m <- demo_manifest(
+#'   metadata = list(yield_draws = yld, grounding = grounding_grounded())
 #' )
-#' \dontrun{
-#' # with a real orchestra_manifest from the composition layer:
 #' decide_from_manifest(m, candidates = rates,
 #'                      utility = function(r, y) 300 * y - 1.2 * r)
-#' }
 #' @seealso [decide_rate_from_manifest()] for the agronomic convenience;
 #'   [decide()] for the underlying engine.
 #' @family manifest
@@ -144,12 +154,28 @@ decide_from_manifest <- function(manifest, candidates, utility = NULL,
   if (n_cand == 0L) {
     stop("`candidates` must hold at least one action", call. = FALSE)
   }
-  if (ncol(draws) != n_cand) {
+  # A single-column draws matrix (a posterior over one latent state -- the
+  # shape a flexyBayes posterior or a bare kernR test statistic arrives in,
+  # not a per-candidate outcome grid) is a valid input when `utility` does the
+  # indexing: `utility(candidates[[j]], draws[, 1])` recycles the one posterior
+  # column across every candidate, exactly the shape `decide()` itself takes.
+  # Any other column count that does not match `candidates` is a genuine
+  # mismatch and still stops.
+  recycled_single_column <- ncol(draws) == 1L && n_cand > 1L
+  if (!recycled_single_column && ncol(draws) != n_cand) {
     stop(
       sprintf(
         "manifest draws have %d columns but `candidates` has %d actions",
         ncol(draws), n_cand
       ),
+      call. = FALSE
+    )
+  }
+  if (recycled_single_column && is.null(utility)) {
+    stop(
+      "manifest draws have a single column and `utility` is NULL -- a ",
+      "single posterior column has no per-candidate utility to read ",
+      "directly; supply `utility = function(action, draws_column)`",
       call. = FALSE
     )
   }
@@ -178,7 +204,8 @@ decide_from_manifest <- function(manifest, candidates, utility = NULL,
     vapply(
       seq_len(n_cand),
       function(j) {
-        u <- utility(candidates[[j]], draws[, j])
+        draws_col <- if (recycled_single_column) draws[, 1L] else draws[, j]
+        u <- utility(candidates[[j]], draws_col)
         if (length(u) != nrow(draws)) {
           stop("`utility` must return one value per draw", call. = FALSE)
         }
@@ -235,17 +262,24 @@ decide_from_manifest <- function(manifest, candidates, utility = NULL,
 #' @examples
 #' set.seed(1L)
 #' rates <- seq(0, 200, by = 25)
+#' demo_manifest <- S7::new_class(
+#'   "demo_manifest",
+#'   properties = list(
+#'     outputs         = S7::new_property(S7::class_any, default = NULL),
+#'     metadata        = S7::new_property(S7::class_list, default = list()),
+#'     summary         = S7::new_property(S7::class_any, default = NULL),
+#'     run_id          = S7::new_property(S7::class_character, default = ""),
+#'     emitter_package = S7::new_property(S7::class_character, default = "")
+#'   )
+#' )
 #' ymax  <- rnorm(1500L, 5.5, 0.3)
 #' yld   <- vapply(rates,
 #'                 function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)),
 #'                 numeric(1500L))
-#' m <- structure(
-#'   list(metadata = list(yield_draws = yld, grounding = grounding_grounded())),
-#'   class = "demo_manifest"
+#' m <- demo_manifest(
+#'   metadata = list(yield_draws = yld, grounding = grounding_grounded())
 #' )
-#' \dontrun{
 #' decide_rate_from_manifest(m, rates, price_grain = 300, price_input = 1.2)
-#' }
 #' @seealso [decide_from_manifest()] for the generic tail;
 #'   [decide_input_rate()] for the caller-assembled-matrix form.
 #' @family manifest
