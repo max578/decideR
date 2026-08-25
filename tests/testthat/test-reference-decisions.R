@@ -66,6 +66,44 @@ test_that("decide_position_size goes flat on ungrounded returns (capital firewal
   expect_identical(d@metadata$position, 0)
 })
 
+test_that("decide_input_rate honours a caller-supplied `constraint` (D-02)", {
+  set.seed(1L)
+  rates <- seq(0, 200, by = 25)
+  n <- 2000L
+  ymax <- rnorm(n, mean = 5.5, sd = 0.3)
+  yield_draws <- vapply(
+    rates,
+    function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)) + rnorm(n, 0, 0.1),
+    numeric(n)
+  )
+  d <- decide_input_rate(yield_draws, rates, price_grain = 300,
+                         price_input = 1.2, grounding = grounding_grounded(),
+                         constraint = function(a) a <= 50)
+  expect_false(d@abstained)
+  expect_true(d@action <= 50)                      # previously 175 (D-02)
+  infeasible_eu <- d@candidates$expected_utility[d@candidates$action > 50]
+  expect_true(all(is.na(infeasible_eu)))
+})
+
+test_that("decide_input_rate rejects an unrecognised `...` argument", {
+  rates <- c(0, 50)
+  yield_draws <- matrix(rnorm(200L), ncol = 2L)
+  expect_error(
+    decide_input_rate(yield_draws, rates, price_grain = 300, price_input = 1.2,
+                      grounding = grounding_grounded(), typo_arg = 1),
+    "unrecognised"
+  )
+})
+
+test_that("decide_position_size ANDs a caller `constraint` onto the drawdown cap", {
+  set.seed(3L)
+  r <- rnorm(5000L, mean = 0.02, sd = 0.03)
+  d <- decide_position_size(r, capital = 1000, max_drawdown = 0.15,
+                            grounding = grounding_grounded(),
+                            constraint = function(f) f <= 0.1)
+  expect_true(d@action <= 0.1 + 1e-8)
+})
+
 test_that("a tighter drawdown cap yields a smaller or equal position", {
   set.seed(8L)
   r <- rnorm(5000L, mean = 0.02, sd = 0.05)        # edge with fatter risk
