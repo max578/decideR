@@ -70,6 +70,10 @@
   grounding_unverified()
 }
 
+# -----------------------------------------------------------------------------
+# Exported manifest tail
+# -----------------------------------------------------------------------------
+
 #' Turn an orchestra manifest into a decision
 #'
 #' The manifest-native pipeline tail. Given an `orchestra_manifest` emitted by

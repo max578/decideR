@@ -38,6 +38,10 @@
   invisible(TRUE)
 }
 
+# -----------------------------------------------------------------------------
+# Exported value schedule and utility builder
+# -----------------------------------------------------------------------------
+
 #' A grade-band value schedule (threshold-economics loss)
 #'
 #' Builds a step value schedule: a payoff that is constant within a quality band

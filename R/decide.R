@@ -10,6 +10,10 @@
 # Oracle Principle firewall), no feasible action, too few effective draws, and
 # a too-close-to-call margin.
 
+# -----------------------------------------------------------------------------
+# Internal core
+# -----------------------------------------------------------------------------
+
 # Locate the safe action in the candidate set (numeric grids only), so the
 # decisiveness check can compare the chosen action against the status quo.
 # Returns NA when there is no numeric match.
@@ -105,6 +109,10 @@
     metadata         = metadata
   )
 }
+
+# -----------------------------------------------------------------------------
+# Exported decision rule
+# -----------------------------------------------------------------------------
 
 #' Choose an action by expected utility, with grounding and abstention
 #'

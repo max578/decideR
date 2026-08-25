@@ -9,6 +9,10 @@
 # Principle firewall (abstain on un-grounded input) applies the same way to a
 # nitrogen rate and to real money.
 
+# -----------------------------------------------------------------------------
+# Agronomy: bounded input-rate selection
+# -----------------------------------------------------------------------------
+
 #' Choose a crop input rate by expected profit
 #'
 #' A reference decision for the agronomic domain. Given posterior draws of yield
@@ -68,6 +72,10 @@ decide_input_rate <- function(yield_draws, rates, price_grain, price_input,
     metadata = list(domain = "agronomy")
   )
 }
+
+# -----------------------------------------------------------------------------
+# Trading: constraint-capped position sizing
+# -----------------------------------------------------------------------------
 
 #' Size a trading position by capped expected log-growth under a drawdown limit
 #'

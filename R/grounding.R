@@ -40,6 +40,10 @@ grounding_grounded <- function() "grounded"
 #' @export
 grounding_unverified <- function() "[unverified]"
 
+# -----------------------------------------------------------------------------
+# Worst-case combination
+# -----------------------------------------------------------------------------
+
 #' Combine input grounding worst-case
 #'
 #' A decision that rests on several inputs is grounded only when *every* input
