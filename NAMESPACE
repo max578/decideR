@@ -3,6 +3,7 @@
 S3method(print,grade_band_value)
 export(combine_grounding)
 export(decide)
+export(decide_bcr)
 export(decide_evpi)
 export(decide_evsi)
 export(decide_from_manifest)
