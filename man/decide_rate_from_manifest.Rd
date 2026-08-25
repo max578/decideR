@@ -48,17 +48,24 @@ producer, so an un-grounded yield posterior forces the status-quo rate.
 \examples{
 set.seed(1L)
 rates <- seq(0, 200, by = 25)
+demo_manifest <- S7::new_class(
+  "demo_manifest",
+  properties = list(
+    outputs         = S7::new_property(S7::class_any, default = NULL),
+    metadata        = S7::new_property(S7::class_list, default = list()),
+    summary         = S7::new_property(S7::class_any, default = NULL),
+    run_id          = S7::new_property(S7::class_character, default = ""),
+    emitter_package = S7::new_property(S7::class_character, default = "")
+  )
+)
 ymax  <- rnorm(1500L, 5.5, 0.3)
 yld   <- vapply(rates,
                 function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)),
                 numeric(1500L))
-m <- structure(
-  list(metadata = list(yield_draws = yld, grounding = grounding_grounded())),
-  class = "demo_manifest"
+m <- demo_manifest(
+  metadata = list(yield_draws = yld, grounding = grounding_grounded())
 )
-\dontrun{
 decide_rate_from_manifest(m, rates, price_grain = 300, price_input = 1.2)
-}
 }
 \seealso{
 \code{\link[=decide_from_manifest]{decide_from_manifest()}} for the generic tail;

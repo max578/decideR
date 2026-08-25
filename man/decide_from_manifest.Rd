@@ -68,20 +68,30 @@ tail consumes any conforming producer rather than special-casing each one.
 \examples{
 set.seed(1L)
 rates <- seq(0, 200, by = 25)
-# a manifest-shaped object: yield draws per rate in `metadata$yield_draws`
+# In production the manifest is a real `orchestra_manifest` S7 object from
+# the composition layer. Here, a minimal S7 stand-in carrying the same
+# public properties the tail reads (`outputs`, `metadata`, `summary`,
+# `run_id`, `emitter_package`) -- an S3 list is NOT readable by the tail,
+# which duck-types through S7 property access.
+demo_manifest <- S7::new_class(
+  "demo_manifest",
+  properties = list(
+    outputs         = S7::new_property(S7::class_any, default = NULL),
+    metadata        = S7::new_property(S7::class_list, default = list()),
+    summary         = S7::new_property(S7::class_any, default = NULL),
+    run_id          = S7::new_property(S7::class_character, default = ""),
+    emitter_package = S7::new_property(S7::class_character, default = "")
+  )
+)
 ymax <- rnorm(1500L, 5.5, 0.3)
 yld  <- vapply(rates,
                function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)),
                numeric(1500L))
-fake_manifest <- structure(
-  list(metadata = list(yield_draws = yld, grounding = grounding_grounded())),
-  class = "demo_manifest"
+m <- demo_manifest(
+  metadata = list(yield_draws = yld, grounding = grounding_grounded())
 )
-\dontrun{
-# with a real orchestra_manifest from the composition layer:
 decide_from_manifest(m, candidates = rates,
                      utility = function(r, y) 300 * y - 1.2 * r)
-}
 }
 \seealso{
 \code{\link[=decide_rate_from_manifest]{decide_rate_from_manifest()}} for the agronomic convenience;
