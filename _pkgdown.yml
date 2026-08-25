@@ -12,6 +12,11 @@ reference:
       Deciding directly from an upstream `orchestra_manifest`.
     contents:
       - has_concept("manifest")
+  - title: Value
+    desc: >
+      Value of information (EVPI, EVSI) and the discounted benefit-cost ratio.
+    contents:
+      - has_concept("value")
   - title: Grounding
     desc: >
       The Independent Oracle Principle provenance vocabulary.

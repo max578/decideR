@@ -1,7 +1,35 @@
 # decideR (development version)
 
-Fixes from the 2026-08-25 ORCHESTRA fitness audit (all CONFIRMED CRITICAL/HIGH
-findings except the value-of-information verbs, deferred to a later wave).
+Fixes from the 2026-08-25 ORCHESTRA fitness audit.
+
+## New features
+
+* `decide_evpi()` prices the expected value of perfect information over the
+  same manifest, candidate set and utility the decision tail takes:
+  `E[max_a U(a, theta)] - max_a E[U(a, theta)]` over the feasible candidates.
+  It is the ceiling on what any study addressing the latent state could be
+  worth.
+* `decide_evsi()` prices one named prospective sample -- this soil test, this
+  trial, at this site -- by the standard two-loop pre-posterior algorithm, with
+  the inner update obtained by importance re-weighting the manifest's own draws
+  rather than by a nested re-fit, so the manifest remains the single source of
+  the posterior and the package gains no sampler. The effective sample size of
+  the weights is reported and warned about when it degenerates.
+* `decide_bcr()` discounts a benefit stream and a cost stream at an explicit
+  rate over an explicit horizon and reports the components an impact assessment
+  is written from: both streams, the present value of each, the net present
+  value and the ratio, plus a posterior ratio summary when the benefit stream
+  arrives as manifest draws.
+* `valuation`, a new S7 result class for all three. It carries the value beside
+  its grounding token and its abstention record, so an `[unverified]` input
+  prices out as a typed abstention with `value = NA_real_` -- never a number a
+  reader would spend money on. An abstained valuation is class-stamped
+  `decideR_abstention`, so the federation's `is_orchestra_decline()` predicate
+  recognises it without decideR depending on the contract layer.
+* A too-close-to-call decision (`insufficient_evidence`) does not block a value
+  of information: it is exactly the situation in which information is worth
+  buying, and the indecisive decision is returned in the valuation's
+  `@baseline`.
 
 ## Bug fixes
 
