@@ -43,7 +43,8 @@ a zero input rate, the status quo).}
 
 \item{safe_label}{A label for the safe action.}
 
-\item{min_ess}{Optional effective-sample-size floor.}
+\item{min_ess}{Optional effective-sample-size floor; the \code{low_ess}
+abstention trigger is off by default and fires only when this is set.}
 
 \item{ess}{Optional effective sample size of \code{draws}; defaults to
 \code{length(draws)}.}
@@ -70,11 +71,16 @@ draws and selects the maximiser. It declines to do so -- abstaining to
 \code{safe_action} -- under any of four conditions, checked in this order: the
 combined input \code{grounding} is not grounded (the Independent Oracle Principle
 firewall: never act on an unverified fact); no candidate satisfies
-\code{constraint}; the effective sample size is below \code{min_ess}; or the chosen
+\code{constraint}; the effective sample size is below \code{min_ess} (this trigger is
+opt-in -- it never fires unless the caller supplies \code{min_ess}, since there is
+no universal floor a decision-agnostic engine can default to); or the chosen
 action beats the \code{safe_action} on fewer than \code{decisive_prob} of the draws
 (it is not clearly better than the status quo). The last check is judged
 against the safe action, not the runner-up, so a fine candidate grid does
-not trigger spurious indecision.
+not trigger spurious indecision; when \code{safe_action} has no numeric match in
+\code{candidates} (a categorical action set, or an off-grid numeric safe action)
+it falls back to the per-draw argmax probability, so the gate stays live
+for every candidate shape rather than becoming a no-op.
 }
 \details{
 The grounding label is combined worst-case across \code{grounding} with

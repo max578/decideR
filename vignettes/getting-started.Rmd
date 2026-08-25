@@ -268,8 +268,13 @@ they are checked:
 |---|---|
 | `input_ungrounded` | An input fact is `[unverified]` (the IOP firewall). |
 | `no_feasible_action` | No candidate satisfies the constraint. |
-| `low_ess` | The effective sample size is below the floor. |
+| `low_ess` | The effective sample size is below the floor (opt-in -- see below). |
 | `insufficient_evidence` | The best action does not clearly beat the status quo. |
+| `degenerate_utility` | Every feasible candidate's expected utility is `NA`/`NaN`. |
+
+`low_ess` is opt-in: it never fires unless the caller supplies `min_ess`, since
+there is no universal effective-sample-size floor a decision-agnostic engine can
+default to.
 
 In every case the returned `action` is the caller's `safe_action`, and
 `is_grounded()` reports whether the decision rests on grounded evidence -- the

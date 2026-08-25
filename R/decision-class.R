@@ -82,6 +82,31 @@ decision <- S7::new_class(
   }
 )
 
+# -----------------------------------------------------------------------------
+# ORCHESTRA cross-member refusal/abstention contract
+# -----------------------------------------------------------------------------
+# The federation's leader-side predicate `is_orchestra_decline()`
+# (`ORCHESTRA_dev/integration/refusal_contract.R`) recognises a member's
+# decline producer-agnostically by a naming convention on the RETURNED
+# OBJECT's `class()` vector: a structured refusal ends in `_refusal`, a
+# structured abstention ends in `_abstention`. A `decision` on its own only
+# carries the S7 class chain (`c("decideR::decision", "S7_object")`), which
+# does not match either suffix -- an abstained decideR decision would
+# therefore be invisible to a cross-member gate built on that predicate.
+# `.stamp_abstention_class()` prepends `"decideR_abstention"` onto an
+# abstained decision's class vector so it is recognised without decideR
+# depending on the contract layer, exactly the composition-layer convention
+# the manifest tail already uses for the S7 duck-typed read. Prepending (not
+# replacing) preserves S7 property access and S7 method dispatch (verified:
+# `@` access and the registered `print` method both keep working with the
+# extra class present).
+.stamp_abstention_class <- function(x) {
+  if (isTRUE(x@abstained) && !any(class(x) == "decideR_abstention")) {
+    class(x) <- c("decideR_abstention", class(x))
+  }
+  x
+}
+
 #' Is a decision grounded?
 #'
 #' A convenience predicate reading the decision's grounding label. A consumer

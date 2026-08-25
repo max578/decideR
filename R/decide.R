@@ -59,6 +59,13 @@
     reason <- "no_feasible_action"
   } else if (!is.null(min_ess) && ess_eff < min_ess) {
     reason <- "low_ess"
+  } else if (all(is.na(eu[feasible]))) {
+    # Degenerate evidence: every feasible candidate's expected utility is
+    # NA/NaN (e.g. a utility function that returns NaN for every draw). A
+    # decision engine whose premise is honest abstention must decline here
+    # rather than fail with an opaque base-R error from `which.max()` on an
+    # empty result.
+    reason <- "degenerate_utility"
   }
 
   # Decisiveness is judged against the status quo: the posterior probability
@@ -66,15 +73,32 @@
   # decision actually faces -- "is moving off the status quo justified?" -- and
   # is robust to a fine candidate grid, where two near-optimal neighbours would
   # split a per-draw argmax and trigger spurious indecision. When the chosen
-  # action *is* the safe action (no move), or the safe action is not a numeric
-  # candidate, the check is a no-op.
+  # action *is* the safe action (no move), the check is a no-op (already at the
+  # status quo, so there is nothing to be decisive about). When the safe action
+  # has no numeric match in `candidates` -- a categorical action set (`decide()`
+  # over a list), or an off-grid numeric `safe_action` -- there is no status quo
+  # column to compare against, so the gate falls back to the per-draw argmax
+  # probability: the fraction of draws on which the chosen action's utility is
+  # the feasible maximum. This keeps the gate live for every candidate shape
+  # instead of silently no-opping whenever the safe action cannot be located.
   best_idx <- if (any(feasible)) which.max(eu) else NA_integer_
   if (is.na(reason) && any(feasible)) {
     safe_idx <- .match_candidate(candidates, safe_action)
-    decisive <- if (is.na(safe_idx) || identical(safe_idx, best_idx)) {
-      1
+    decisive <- if (!is.na(safe_idx)) {
+      if (identical(safe_idx, best_idx)) {
+        1
+      } else {
+        mean(util_matrix[, best_idx] > util_matrix[, safe_idx])
+      }
     } else {
-      mean(util_matrix[, best_idx] > util_matrix[, safe_idx])
+      feas_idx <- which(feasible)
+      if (length(feas_idx) == 1L) {
+        1
+      } else {
+        row_best <- feas_idx[max.col(util_matrix[, feas_idx, drop = FALSE],
+                                     ties.method = "first")]
+        mean(row_best == best_idx)
+      }
     }
     if (decisive < decisive_prob) {
       reason <- "insufficient_evidence"
@@ -95,7 +119,7 @@
     label <- paste0(label, " ", grounding_unverified())
   }
 
-  decision(
+  out <- decision(
     action           = action,
     action_label     = label,
     expected_utility = eu_sel,
@@ -108,6 +132,7 @@
     inputs           = inputs,
     metadata         = metadata
   )
+  .stamp_abstention_class(out)
 }
 
 # -----------------------------------------------------------------------------
@@ -124,11 +149,16 @@
 #' `safe_action` -- under any of four conditions, checked in this order: the
 #' combined input `grounding` is not grounded (the Independent Oracle Principle
 #' firewall: never act on an unverified fact); no candidate satisfies
-#' `constraint`; the effective sample size is below `min_ess`; or the chosen
+#' `constraint`; the effective sample size is below `min_ess` (this trigger is
+#' opt-in -- it never fires unless the caller supplies `min_ess`, since there is
+#' no universal floor a decision-agnostic engine can default to); or the chosen
 #' action beats the `safe_action` on fewer than `decisive_prob` of the draws
 #' (it is not clearly better than the status quo). The last check is judged
 #' against the safe action, not the runner-up, so a fine candidate grid does
-#' not trigger spurious indecision.
+#' not trigger spurious indecision; when `safe_action` has no numeric match in
+#' `candidates` (a categorical action set, or an off-grid numeric safe action)
+#' it falls back to the per-draw argmax probability, so the gate stays live
+#' for every candidate shape rather than becoming a no-op.
 #'
 #' The grounding label is combined worst-case across `grounding` with
 #' [combine_grounding()], so passing the provenance of several inputs taints the
@@ -147,7 +177,8 @@
 #' @param safe_action The action returned on abstention (e.g. a flat position,
 #'   a zero input rate, the status quo).
 #' @param safe_label A label for the safe action.
-#' @param min_ess Optional effective-sample-size floor.
+#' @param min_ess Optional effective-sample-size floor; the `low_ess`
+#'   abstention trigger is off by default and fires only when this is set.
 #' @param ess Optional effective sample size of `draws`; defaults to
 #'   `length(draws)`.
 #' @param decisive_prob The minimum posterior probability that the chosen action
