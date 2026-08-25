@@ -46,6 +46,33 @@ findings except the value-of-information verbs, deferred to a later wave).
   *one-period* loss-quantile (value-at-risk) floor, not a multi-period
   peak-to-trough drawdown statistic, which the previous wording could be read
   to promise (D-09).
+* `is_grounded()`'s roxygen and the vignette's abstention section now state
+  the correct downstream gate: `is_grounded()` alone is `TRUE` for a decision
+  that abstained for `no_feasible_action`, `low_ess`, or
+  `insufficient_evidence`, since none of those reasons downgrades the
+  grounding label; a consumer that must also refuse an abstained decision
+  gates on `is_grounded(x) && !x@abstained` (D-14).
+* Named the Kelly (1956) reference for `decide_position_size()`'s expected
+  log-growth objective and fixed a grammatical ellipsis in
+  `decide_from_manifest()`'s `utility` documentation.
+* `_pkgdown.yml` now groups the reference index into four named sections
+  (Decisions, Manifest tail, Grounding, Loss) keyed to the existing
+  `@family` tags, replacing the single undifferentiated catch-all list
+  (D-17).
+* Copy-edited five grammar/sharpness issues in the getting-started vignette
+  and the README (mass-noun agreement, an elliptical "act ... when you
+  should", a subject-verb number mismatch, a trailing preposition, a missing
+  "in which") (D-18).
+* The getting-started vignette now carries two figures -- the nitrogen-rate
+  candidate ledger and the grade-band schedule with the chosen rate's protein
+  posterior overlaid -- each with a caption and an interpreting sentence; the
+  vignette previously shipped with no figures at all (D-13).
+* `README.Rmd` now knits with `md_extensions: -smart`, so the generated
+  `README.md` uses plain ASCII `--` throughout instead of pandoc's
+  smart-typography en dashes (D-20); `README.md` re-knitted, which also
+  fixes the stale example output that printed `grade_band_value()`'s return
+  as a raw closure dump instead of the band table (the D-03 print-dispatch
+  fix landed after the README was last knitted).
 
 ## Testing
 
