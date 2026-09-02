@@ -1,3 +1,12 @@
+# decideR (development version)
+
+## Documentation
+
+* *Getting started with decideR* was brought to the orchestra's vignette
+  quality bar: Why/What/Do/Read/Limits shape, every printed number computed
+  inline, ggplot2 figures for the nitrogen-rate and grade-band decisions, and
+  the grounding firewall read in prose on a decision that abstains for real.
+
 # decideR 0.2.0
 
 Fixes from the 2026-08-25 ORCHESTRA fitness audit.
