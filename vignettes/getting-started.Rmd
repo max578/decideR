@@ -7,54 +7,124 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+<!-- Render time: ~1 s under rmarkdown::render(); macOS arm64, R 4.5.1, one
+     core. No sampler runs in this vignette; every decision is a closed-form
+     expected-utility scan over a candidate grid. -->
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 150
 )
 set.seed(1L)
 ```
 
-```{r}
+```{r library}
 library(decideR)
 ```
 
-## What decideR does
+## Why
 
-`decideR` turns *uncertainty about the world* into *an action*. Given posterior
-draws of an unknown state $\theta$, an explicit utility $U(a, \theta)$, and a set
-of candidate actions, it chooses the feasible action of greatest expected utility,
-$\arg\max_a \mathrm{E}_\theta[U(a, \theta)]$. It is the decision layer of the
-ORCHESTRA analytics framework: the same engine sizes a crop nitrogen rate and a
-trading position, because both are the same problem -- act under uncertainty, and
-refuse to act when the evidence will not support it.
+An agronomist closing out a nitrogen trial holds posterior draws of grain
+yield at a handful of candidate rates and one concrete question to answer for
+the grower: *what rate should go on, and how much should I trust that
+number?* `decideR` answers both halves of that question with one call: it
+turns a posterior into the profit-maximising rate over the candidates on
+offer, and it declines to recommend a rate at all when the yield evidence
+behind the posterior has not been checked against its source. This vignette
+walks that nitrogen decision from posterior draws to a marked-up candidate
+curve, shows the refusal for real on the identical draws, and then carries
+the same engine into two further settings -- a trading position sized under
+a capital-preservation constraint, and a grain-quality payoff that steps
+rather than rises smoothly -- because the underlying question, act under
+uncertainty or decline to, is the same question in every one of them.
 
-Two principles separate `decideR` from a bare `which.max`:
+## What
 
-1. **Calibrated abstention.** A decision may decline to move off a safe fallback
-   action when the evidence is too thin, too sparse, or not clearly better than
-   the status quo. Abstention is a first-class outcome, recorded with a reason.
-2. **The Independent Oracle Principle (IOP).** Every decision carries a
-   *grounding* label, combined worst-case from its inputs. A decision built on a
-   fact that has not been checked against the external authority that owns it is
-   labelled `[unverified]` and is downgraded to abstention -- never asserted with
-   false confidence.
+`decide()` is the shared keystone every decision in this vignette reduces
+to. Given posterior `draws` of a latent state, a `utility(action, theta)`
+function, and a set of candidate actions, it evaluates the expected utility
+of each feasible candidate by averaging over the draws and returns a
+`decision`: an S7 object carrying the chosen `action`, the
+`expected_utility` that justified it, the full `candidates` ledger, and two
+fields the Independent Oracle Principle requires on every decision --
+`grounding` and the abstention record (`abstained`, `abstain_reason`). A
+decision abstains, in priority order, when the combined `grounding` is not
+grounded, when no candidate is feasible, when the effective sample size
+falls below an opt-in `min_ess` floor, or when the leading candidate does
+not clearly beat the safe action; a fifth trigger catches a utility that
+returns no usable value anywhere on the grid. `grounding_grounded()` and
+`grounding_unverified()` are the two tokens a fact can carry, and
+`combine_grounding()` folds several into one worst case, so a decision
+resting on several inputs is only as grounded as its weakest one. The full
+vocabulary of abstention reasons, in the order `decide()` checks them:
 
-## A crop decision: nitrogen rate
+```{r abstention-table, echo = FALSE}
+abstention_reasons <- data.frame(
+  reason = c(
+    "input_ungrounded", "no_feasible_action", "low_ess",
+    "insufficient_evidence", "degenerate_utility"
+  ),
+  meaning = c(
+    "An input fact carries grounding_unverified() (the IOP firewall).",
+    "No candidate satisfies the feasibility constraint.",
+    "The effective sample size is below min_ess (opt-in; off by default).",
+    "The best action does not clearly beat the safe action.",
+    "Every feasible candidate's expected utility is NA or NaN."
+  ),
+  stringsAsFactors = FALSE
+)
+knitr::kable(
+  abstention_reasons, col.names = c("Reason", "Meaning"),
+  caption = "The abstention vocabulary decide() reports, checked in order."
+)
+```
 
-Suppose an upstream model -- a mechanistic-simulator inversion, say -- gives us
-posterior draws of grain yield at each candidate nitrogen rate. We choose the
-rate that maximises expected profit, $\mathrm{E}[p_y\,y(r) - p_r\,r]$.
+`decide_input_rate()` and `decide_position_size()` are the two reference
+decisions this vignette exercises directly: the first chooses an agronomic
+input rate by expected profit over a matrix of per-rate yield draws, the
+second sizes a trading position by capped expected log-growth (the Kelly
+objective) under a hard one-period loss-quantile constraint. Both route
+through `decide()`'s shared core, so a nitrogen rate and a trading position
+are, structurally, the same computation with a different utility and a
+different candidate grid. `decide_from_manifest()` and its agronomic
+convenience `decide_rate_from_manifest()` are the manifest-native pipeline
+tail: given an `orchestra_manifest` (or any S7 object exposing the same
+`outputs`/`metadata`/`summary` properties) emitted upstream, they read the
+predictive draws and the producer's own grounding token straight off it, so
+a decision at the end of a pipeline never re-derives provenance an upstream
+member already established. `grade_band_value()` builds a step value
+schedule for a quality-graded payoff -- a grain price that jumps at a
+threshold rather than rising continuously -- and `grade_band_utility()`
+turns that schedule into a `decide()` utility directly (not exercised below,
+where the equivalent shift is written by hand to keep the worked example
+self-contained).
 
-```{r}
+## Do
+
+### A nitrogen-rate decision
+
+An upstream model -- a mechanistic-simulator inversion, say -- has produced
+posterior draws of grain yield at each of a set of candidate nitrogen rates,
+following a diminishing-returns response with posterior noise. The engine
+chooses the rate that maximises expected profit,
+$\mathrm{E}[p_y\,y(r) - p_r\,r]$, at a grain price $p_y$ and an input price
+$p_r$.
+
+```{r nitrogen-toy}
 rates <- seq(0, 200, by = 25)
-ymax  <- rnorm(2000L, mean = 5.5, sd = 0.3)        # posterior of asymptotic yield
+ymax <- rnorm(2000L, mean = 5.5, sd = 0.3)      # posterior of asymptotic yield
 yield_draws <- vapply(
   rates,
   function(r) 3 + (ymax - 3) * (1 - exp(-r / 80)) + rnorm(2000L, 0, 0.1),
   numeric(2000L)
 )
+```
 
+```{r nitrogen-decide}
 d_crop <- decide_input_rate(
   yield_draws, rates, price_grain = 300, price_input = 1.2,
   grounding = grounding_grounded()
@@ -62,36 +132,51 @@ d_crop <- decide_input_rate(
 d_crop
 ```
 
-The decision selects an interior optimum and reports the expected profit that
-justified it. The full candidate ledger is available for inspection or a methods
-appendix:
+The full candidate ledger -- every rate evaluated, feasible or not, with its
+expected profit -- is available for inspection or a methods appendix rather
+than discarded once the maximiser has run.
 
-```{r}
-head(d_crop@candidates)
+```{r nitrogen-ledger-kable, echo = FALSE}
+knitr::kable(
+  d_crop@candidates, digits = 0,
+  col.names = c("Rate (kg N/ha)", "Expected profit (AUD/ha)", "Feasible"),
+  caption = paste0(
+    "Candidate ledger for the nitrogen-rate decision, every rate on ",
+    "the grid."
+  )
+)
 ```
 
-```{r fig-crop-ledger, fig.cap = "Expected profit against candidate nitrogen rate, with the chosen rate marked. The curve rises steeply at low rates, where nitrogen is well below the point of diminishing yield response, then flattens and turns down once the input cost outweighs the marginal yield gain -- the chosen action sits at the turning point, not at the highest rate on the grid."}
-with(d_crop@candidates, {
-  plot(action, expected_utility, type = "b", pch = 16,
-       xlab = "Nitrogen rate (kg/ha)", ylab = "Expected profit ($/ha)",
-       main = "Candidate ledger: nitrogen rate")
-  abline(v = d_crop@action, lty = 2, col = "firebrick")
-  text(d_crop@action, min(expected_utility),
-       paste0("chosen: ", d_crop@action), pos = 4, col = "firebrick")
-})
+```{r fig-nitrogen-ledger, echo = requireNamespace("ggplot2", quietly = TRUE), eval = requireNamespace("ggplot2", quietly = TRUE), fig.cap = "Expected profit against candidate nitrogen rate. The curve rises steeply at low rates, where nitrogen is well below the point of diminishing yield response, then flattens as the input cost catches up with the marginal yield gain; the chosen rate (marked) sits at the turning point, not at the top of the grid."}
+ledger_df <- d_crop@candidates
+ledger_df$point_type <- ifelse(
+  ledger_df$action == d_crop@action, "chosen", "evaluated"
+)
+ggplot2::ggplot(ledger_df, ggplot2::aes(x = action, y = expected_utility)) +
+  ggplot2::geom_line(colour = "grey50") +
+  ggplot2::geom_point(ggplot2::aes(colour = point_type), size = 3) +
+  ggplot2::geom_vline(
+    xintercept = d_crop@action, linetype = "dashed", colour = "grey40"
+  ) +
+  ggplot2::scale_colour_viridis_d(name = NULL, end = 0.8) +
+  ggplot2::labs(
+    x = "Nitrogen rate (kg N/ha)", y = "Expected profit (AUD/ha)",
+    title = "Candidate ledger: nitrogen rate"
+  ) +
+  ggplot2::theme_minimal()
 ```
 
-The figure makes the same point as the printed decision, visually: the chosen
-rate is the peak of the expected-profit curve over the candidate grid, not an
-extreme of it, and every candidate the engine rejected is still visible for
-inspection rather than discarded.
+```{r fig-nitrogen-ledger-skip, echo = FALSE, eval = !requireNamespace("ggplot2", quietly = TRUE), results = "asis"}
+cat("ggplot2 is not installed; the candidate-ledger figure is skipped.\n")
+```
 
-### What happens when the yield evidence is not grounded
+### The grounding firewall, applied to a nitrogen rate
 
-The same call, but now the yield draws come from a source that has *not* been
-verified against an external authority (the IOP default):
+The identical posterior, prices and candidate grid, but this time the yield
+evidence carries `grounding_unverified()` -- not checked against an external
+authority, the Independent Oracle Principle default.
 
-```{r}
+```{r nitrogen-ungrounded}
 d_crop_ungrounded <- decide_input_rate(
   yield_draws, rates, price_grain = 300, price_input = 1.2,
   grounding = grounding_unverified()
@@ -99,18 +184,14 @@ d_crop_ungrounded <- decide_input_rate(
 d_crop_ungrounded
 ```
 
-The decision abstains to the status quo (`rate = 0`), records the reason
-`input_ungrounded`, and stamps the action label `[unverified]`. No confident
-recommendation is minted on an unchecked fact.
+### The same engine, a different domain: sizing a trading position
 
-## A trading decision: position size
+`decide_position_size()` routes through the identical core: given predictive
+draws of the next-period return, it chooses the fraction of capital that
+maximises expected log-growth $\mathrm{E}[\log(1 + f\,r)]$ over a grid capped
+at `kelly_cap`, subject to a hard one-period loss-quantile constraint.
 
-The identical engine sizes a position. Given predictive draws of the next-period
-return, `decide_position_size()` chooses the fraction of capital that maximises
-expected log-growth $\mathrm{E}[\log(1 + f\,r)]$ -- the Kelly objective -- over a
-grid capped at `kelly_cap`, subject to a hard drawdown constraint.
-
-```{r}
+```{r trading-decide}
 returns <- rnorm(5000L, mean = 0.02, sd = 0.03)    # a small positive edge
 d_trade <- decide_position_size(
   returns, capital = 1000, max_drawdown = 0.15,
@@ -120,10 +201,10 @@ d_trade
 d_trade@metadata$position                          # implied dollar position
 ```
 
-With **no edge**, the grid maximiser is naturally flat -- the engine does not
-manufacture a position where none is warranted:
+With no edge, the grid maximiser is naturally flat -- the engine does not
+manufacture a position where none is warranted.
 
-```{r}
+```{r trading-flat}
 flat <- decide_position_size(
   rnorm(5000L, mean = 0, sd = 0.03), capital = 1000, max_drawdown = 0.15,
   grounding = grounding_grounded()
@@ -131,11 +212,12 @@ flat <- decide_position_size(
 flat@action                                        # 0: flat
 ```
 
-And the **capital firewall**: an un-grounded return series -- a price feed not
-verified against the exchange -- forces flat, regardless of how attractive the
+And the capital firewall: the same return draws that produced a decided
+position above, now carrying `grounding_unverified()` -- a price feed not
+checked against the exchange -- force flat, regardless of how attractive the
 numbers look.
 
-```{r}
+```{r trading-firewall}
 d_trade_ungrounded <- decide_position_size(
   returns, capital = 1000, max_drawdown = 0.15,
   grounding = grounding_unverified()
@@ -144,32 +226,21 @@ d_trade_ungrounded@abstained
 d_trade_ungrounded@abstain_reason
 ```
 
-## The shared keystone
+### The pipeline tail: deciding from an upstream manifest
 
-Both decisions above route through one internal engine. A nitrogen rate and a
-position size are the same computation -- expected-utility maximisation over a
-candidate grid, under a feasibility constraint, with grounding and abstention.
-That is the design claim `decideR` makes concrete: one decision layer, many
-domains, and the same honesty discipline applied to a paddock and to real money.
+In an ORCHESTRA pipeline the yield posterior above is not assembled by
+hand -- it arrives as an `orchestra_manifest` emitted by an upstream member
+(a PESTO ensemble inversion, a kernR causal test, a flexyBayes posterior).
+`decide_rate_from_manifest()` reads the predictive draws and the producer's
+grounding token straight off the manifest and closes the loop into a
+decision. `decideR` does not depend on the contract package -- the manifest
+is read through its public properties (`outputs`, `metadata`, `summary`), so
+the tail consumes any conforming producer rather than special-casing each
+one. In production the manifest is a real `orchestra_manifest` S7 object
+from the composition layer; a minimal S7 stand-in carrying the same public
+properties is built below to keep this vignette self-contained.
 
-## The pipeline tail: deciding from an upstream manifest
-
-In an ORCHESTRA pipeline the yield posterior above is not assembled by hand --
-it arrives as an `orchestra_manifest` emitted by an upstream member (a PESTO
-ensemble inversion, a kernR causal test, a flexyBayes posterior).
-`decide_rate_from_manifest()` is the standard tail of that pipeline: it reads
-the predictive draws and the producer's grounding token straight off the
-manifest and closes the loop into a decision. `decideR` does not depend on the
-contract package -- the manifest is read through its public properties
-(`outputs`, `metadata`, `summary`), so the tail consumes any conforming
-producer rather than special-casing each one.
-
-```{r}
-# In production the manifest is a real `orchestra_manifest` S7 object from the
-# composition layer. For a self-contained vignette we build a minimal S7
-# stand-in carrying the same public properties the tail reads: the yield draws
-# in `outputs` (the contract's prediction slot) and the producer's grounding
-# token in `metadata$grounding`.
+```{r manifest-stand-in}
 vignette_manifest <- S7::new_class(
   "vignette_manifest",
   properties = list(
@@ -192,7 +263,7 @@ m_ungrounded <- vignette_manifest(
 )
 ```
 
-```{r}
+```{r manifest-tail}
 d_tail <- decide_rate_from_manifest(
   m_grounded, rates = rates, price_grain = 300, price_input = 1.2
 )
@@ -200,47 +271,45 @@ d_tail
 d_tail@inputs$emitter_package      # provenance carried from the manifest
 ```
 
-The grounding rides from the producer through the decision. A manifest whose
-payload is `[unverified]` forces the status quo -- the Independent Oracle
-Principle firewall applied at the pipeline boundary, so `decideR` never mints a
-confident rate on an upstream fact the producer did not ground.
+The grounding rides from the producer through the decision: a manifest whose
+payload carries `grounding_unverified()` forces the status quo, the same
+firewall applied at the pipeline boundary rather than inside a single call.
 
-```{r}
-decide_rate_from_manifest(
+```{r manifest-tail-ungrounded}
+d_tail_ungrounded <- decide_rate_from_manifest(
   m_ungrounded, rates = rates, price_grain = 300, price_input = 1.2
-)@abstained
+)
+d_tail_ungrounded@abstained
 ```
 
-For a fully general tail -- any candidate set, any utility -- use
-`decide_from_manifest()`, which `decide_rate_from_manifest()` wraps.
+For a fully general tail -- any candidate set, any utility --
+`decide_from_manifest()` is the function `decide_rate_from_manifest()`
+wraps.
 
-## A threshold-economics loss: grade-band payoffs
+### A threshold-economics loss: grade-band payoffs
 
 Many grain payoffs are not smooth in the quality they reward. A delivery is
-paid by *grade*: the price steps up as protein clears a milling threshold and
-again at a premium threshold. The value of an outcome depends on which band it
-falls in, not on its exact magnitude, so the decision is governed by the
-posterior probability of clearing each band -- not by the posterior mean. A
-half-percent of expected protein is worth a great deal near a band edge and
-nothing in the middle of a band.
-
+paid by grade: the price steps up as protein clears a milling threshold and
+again at a premium threshold. The value of an outcome depends on which band
+it falls in, not on its exact magnitude, so the decision is governed by the
+posterior probability of clearing each band, not by the posterior mean.
 `grade_band_value()` makes that step payoff a first-class, reusable loss: a
 value schedule with breakpoints.
 
-```{r}
+```{r grade-band-schedule}
 protein_value <- grade_band_value(
   breaks = c(11.5, 13.0),            # milling and premium protein thresholds
-  values = c(300, 360, 420)          # $/t: feed, milling, premium
+  values = c(300, 360, 420)          # AUD/t: feed, milling, premium
 )
 protein_value
 ```
 
-Now a worked grain decision. Nitrogen lifts grain protein with diminishing
-returns; the per-hectare value folds in a 5.5 t/ha yield, and nitrogen costs
-1.3 per unit rate. We hold a posterior over the base (zero-nitrogen) protein and
-choose the rate of greatest expected per-hectare value.
+Nitrogen lifts grain protein with diminishing returns; the per-hectare value
+folds in a 5.5 t/ha yield, and nitrogen costs 1.3 per unit rate. A posterior
+over the base (zero-nitrogen) protein feeds the rate of greatest expected
+per-hectare value.
 
-```{r}
+```{r grade-band-decide}
 qshift <- function(rate, base_protein) {
   base_protein + 3.0 * (1 - exp(-rate / 50))    # protein response to nitrogen
 }
@@ -251,69 +320,175 @@ grain_value <- function(rate, base_protein) {
 
 base_protein <- rnorm(4000L, mean = 10.6, sd = 0.5)
 rates_n <- seq(0, 150, by = 15)
-d_protein <- decide(base_protein, grain_value, candidates = rates_n,
-                    grounding = grounding_grounded(), safe_action = 0)
+d_protein <- decide(
+  base_protein, grain_value, candidates = rates_n,
+  grounding = grounding_grounded(), safe_action = 0
+)
 d_protein
 ```
 
-The decision applies enough nitrogen to pull protein reliably over the milling
-threshold -- the band premium pays for the nitrogen -- but stops short of the
-rate where the nitrogen cost outruns the premium. The threshold economics show
-up in the candidate ledger: expected value rises steeply while the milling band
-is being secured, then flattens.
-
-```{r}
-head(d_protein@candidates)
+```{r grade-band-probs}
 prot_best <- qshift(d_protein@action, base_protein)
-c(`P(>=11.5 milling)` = mean(prot_best >= 11.5),
-  `P(>=13 premium)`   = mean(prot_best >= 13.0))
+p_milling <- mean(prot_best >= 11.5)
+p_premium <- mean(prot_best >= 13.0)
+c(`P(>=11.5 milling)` = p_milling, `P(>=13 premium)` = p_premium)
 ```
 
-```{r fig-grade-band, fig.cap = "The grade-band step schedule (dollars per tonne, left axis, in grey) against protein, with the posterior density of protein at the chosen nitrogen rate overlaid (right axis, in blue). Most of the posterior mass now sits at or past the milling step, which is why the engine pays for the nitrogen: it is buying probability of clearing the step, not moving the mean protein a little."}
+```{r grade-band-ledger-kable, echo = FALSE}
+knitr::kable(
+  d_protein@candidates, digits = 0,
+  col.names = c("Rate (kg N/ha)", "Expected value (AUD/ha)", "Feasible"),
+  caption = "Candidate ledger for the grade-band nitrogen decision."
+)
+```
+
+```{r fig-grade-band, echo = requireNamespace("ggplot2", quietly = TRUE), eval = requireNamespace("ggplot2", quietly = TRUE), fig.cap = "The grade-band step schedule (blue, left axis) against protein, with the posterior density of protein at the chosen nitrogen rate overlaid (orange, right axis). Most of the posterior mass sits at or past the milling step and well into the premium band, which is why the engine pays for the nitrogen: it is buying probability of clearing a step, not moving the mean protein a little."}
 breaks <- attr(protein_value, "breaks")
 values <- attr(protein_value, "values")
 band_x <- c(min(prot_best) - 0.5, breaks, max(prot_best) + 0.5)
-op <- par(mar = c(4, 4, 3, 4) + 0.1)
-plot(band_x, c(values, values[length(values)]), type = "s", lwd = 2,
-     col = "grey40", xlab = "Protein (%)", ylab = "Grade-band value ($/t)",
-     main = "Grade-band schedule and posterior at chosen rate")
-abline(v = breaks, lty = 3, col = "grey60")
 dens <- density(prot_best)
-par(new = TRUE)
-plot(dens$x, dens$y, type = "l", col = "steelblue", lwd = 2,
-     axes = FALSE, xlab = "", ylab = "")
-axis(4, col = "steelblue", col.axis = "steelblue")
-mtext("Posterior density of protein", side = 4, line = 2.5, col = "steelblue")
-par(op)
+scale_k <- diff(range(values)) / max(dens$y)
+
+plot_df <- rbind(
+  data.frame(
+    x = band_x, y = c(values, values[length(values)]),
+    series = "grade-band value (AUD/t)", stringsAsFactors = FALSE
+  ),
+  data.frame(
+    x = dens$x, y = dens$y * scale_k + min(values),
+    series = "posterior density of protein", stringsAsFactors = FALSE
+  )
+)
+ggplot2::ggplot(plot_df, ggplot2::aes(x = x, y = y, colour = series)) +
+  ggplot2::geom_step(
+    data = plot_df[plot_df$series == "grade-band value (AUD/t)", ],
+    direction = "hv", linewidth = 1
+  ) +
+  ggplot2::geom_line(
+    data = plot_df[plot_df$series == "posterior density of protein", ],
+    linewidth = 1
+  ) +
+  ggplot2::geom_vline(
+    xintercept = breaks, linetype = "dotted", colour = "grey60"
+  ) +
+  ggplot2::scale_colour_viridis_d(name = NULL, end = 0.8) +
+  ggplot2::scale_y_continuous(
+    name = "Grade-band value (AUD/t)",
+    sec.axis = ggplot2::sec_axis(
+      ~ (. - min(values)) / scale_k, name = "Posterior density of protein"
+    )
+  ) +
+  ggplot2::labs(
+    x = "Protein (%)",
+    title = "Grade-band schedule and posterior at chosen rate"
+  ) +
+  ggplot2::theme_minimal() +
+  ggplot2::theme(legend.position = "bottom")
 ```
 
-For an action that shifts the quality outcome additively, `grade_band_utility()`
-builds the `decide()` utility directly; supply a `quality_shift` for any
-non-additive response (the saturating nitrogen response above). The grade-band
-loss is the building block the future `grainPlan` orchestrator reaches for when
-it prices a quality-graded decision.
+```{r fig-grade-band-skip, echo = FALSE, eval = !requireNamespace("ggplot2", quietly = TRUE), results = "asis"}
+cat("ggplot2 is not installed; the grade-band figure is skipped.\n")
+```
 
-## The abstention vocabulary
+## Read
 
-A decision reports exactly why it declined, if it did. The reasons, in the order
-they are checked:
+The nitrogen-rate decision settles on `r d_crop@action` kg N/ha, at an
+expected profit of `r sprintf("%.0f", d_crop@expected_utility)` AUD/ha --
+an interior point of the nine-rate grid, short of the `r max(rates)`
+kg N/ha ceiling, because beyond it the marginal yield response no longer
+covers the input cost. The figure makes the same point visually: the chosen
+rate sits at the turning point of the expected-profit curve, not at an
+extreme of it, and every rejected candidate stays visible in the ledger
+above it rather than being discarded once the maximiser has run.
 
-| Reason | Meaning |
-|---|---|
-| `input_ungrounded` | An input fact is `[unverified]` (the IOP firewall). |
-| `no_feasible_action` | No candidate satisfies the constraint. |
-| `low_ess` | The effective sample size is below the floor (opt-in -- see below). |
-| `insufficient_evidence` | The best action does not clearly beat the status quo. |
-| `degenerate_utility` | Every feasible candidate's expected utility is `NA`/`NaN`. |
+The firewall changes nothing about the posterior or the prices, only the
+`grounding` token, and that alone is enough to move the decision:
+`d_crop_ungrounded` abstains (`abstained` is
+`r d_crop_ungrounded@abstained`) with reason
+`` `r d_crop_ungrounded@abstain_reason` ``, returns to the status-quo rate
+of `r d_crop_ungrounded@action` kg N/ha, and its action label is suffixed
+`` `r grounding_unverified()` `` so the caveat travels with the number
+wherever it is printed. No profit figure is quoted for a rate the evidence
+does not support.
 
-`low_ess` is opt-in: it never fires unless the caller supplies `min_ess`, since
-there is no universal effective-sample-size floor a decision-agnostic engine can
-default to.
+The trading decision picks a `r sprintf("%.0f", 100 * d_trade@action)`%
+position (`r sprintf("$%.0f", d_trade@metadata$position)` of the
+`r sprintf("$%.0f", 1000)` capital base) on a small positive edge -- exactly
+the `kelly_cap` ceiling of `r sprintf("%.0f", 100 * 0.5)`%, so the binding
+constraint here is the fractional-Kelly cap rather than the drawdown
+guard. With no edge the same engine settles on `r flat@action`: a
+zero-edge return series gives the maximiser nothing to buy. Grounding the
+identical return draws as `` `r grounding_unverified()` `` reproduces the
+nitrogen firewall in the trading domain: `d_trade_ungrounded` abstains
+(`r d_trade_ungrounded@abstained`) for the same reason,
+`` `r d_trade_ungrounded@abstain_reason` ``, forcing flat regardless of how
+attractive the draws look.
 
-In every case the returned `action` is the caller's `safe_action`. `is_grounded()`
-reports only whether the underlying evidence is grounded -- it is `TRUE` even for
-a decision that abstained for `no_feasible_action`, `low_ess`, or
-`insufficient_evidence`, since none of those reasons touches the grounding label.
-A downstream consumer that must refuse to act on either un-grounded evidence or
-an abstained decision -- for example a live order path -- gates on
-`is_grounded(d) && !d@abstained`.
+The manifest tail reproduces the hand-assembled nitrogen decision exactly --
+`d_tail@action` is `r d_tail@action`, matching `d_crop@action` -- because
+`decide_rate_from_manifest()` reads the identical draws and the identical
+grounding token, only through the manifest's public properties rather than
+by hand. Its `inputs$emitter_package` records
+`` `r d_tail@inputs$emitter_package` ``, the provenance carried across the
+pipeline boundary. Swapping the manifest's
+grounding to `` `r grounding_unverified()` `` abstains the tail
+(`r d_tail_ungrounded@abstained`) exactly as the hand-assembled call did: the
+firewall is enforced at the boundary of the pipeline, not only inside a
+single function call.
+
+The grade-band decision applies `r d_protein@action` kg N/ha of the
+`r max(rates_n)` kg N/ha grid -- enough to be certain of clearing the
+milling threshold (`P(>=11.5 milling)` is
+`r sprintf("%.0f", 100 * p_milling)`%) and to clear the premium threshold on
+`r sprintf("%.0f", 100 * p_premium)`% of the posterior, but not so much that
+the nitrogen cost outruns the extra premium. The figure shows why: most of
+the posterior density of protein at the chosen rate sits at or past the
+milling step and well into the premium band, so the engine is buying
+probability of clearing a step rather than nudging the mean protein a
+fraction of a percentage point.
+
+## Limits
+
+Every posterior in this vignette is synthetic -- a diminishing-returns
+nitrogen response, a Gaussian return series, a shifted protein response --
+chosen to keep the vignette fast and self-contained, not fitted to a field
+trial or a live price feed; a real PESTO inversion or kernR causal test
+would supply the actual posterior these examples stand in for. The
+grounding token is set directly by the caller in every example here, by
+hand, with `grounding_grounded()` or `grounding_unverified()`; `decideR`
+performs no verification step of its own. Establishing that a fact has
+actually been checked against the external authority that owns it is the
+job of the upstream producer, and `decideR`'s contribution is solely to
+combine that provenance worst-case and abstain when the combined label is
+not grounded. The trading position's `max_drawdown` guard is a hard
+one-period loss-quantile constraint, not a multi-period peak-to-trough
+drawdown; a decision made period by period under this guard is not
+equivalent to a backtested trading strategy over a path. The `low_ess`
+trigger is opt-in and is not exercised anywhere in this vignette, since no
+call here supplies `min_ess`; `decisive_prob` is left at its default of
+0.6 throughout, and a different threshold would move exactly which
+near-tie candidates abstain as `insufficient_evidence`, a sensitivity not
+explored here. The value-of-information verbs (`decide_evpi()`,
+`decide_evsi()`) and the benefit-cost verbs (`decide_bcr()`,
+`bcr_crrdc()`) added since this vignette was first written are not
+demonstrated here; see *What to read next*. Every decision above is a
+single static candidate scan, not a sequential or dynamic decision problem.
+
+## What to read next
+
+*From an inference result to a grain plan*, `grainPlan`'s vignette, is the
+grain-specific decision orchestrator built directly on `decideR`'s manifest
+tail -- it carries the pipeline demonstrated above through to a
+practitioner-facing recommendation. The package's own reference pages for
+`decide_evpi()`, `decide_evsi()`, `decide_bcr()` and `bcr_crrdc()` cover the
+value-of-information and CRRDC-guideline benefit-cost verbs this vignette
+does not exercise; `NEWS.md` records the audit findings each of them closed.
+
+## Reproduce
+
+Seed `1` for every random draw in this vignette, set once before the first
+chunk runs. Package versions follow.
+
+```{r session-info}
+sessionInfo()
+```
