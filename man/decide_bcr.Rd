@@ -98,6 +98,7 @@ decide_bcr(benefits = c(0, 210), costs = c(100, 0), discount_rate = 0.05)
 whole programme.
 
 Other value: 
+\code{\link{bcr_crrdc}()},
 \code{\link{decide_evpi}()},
 \code{\link{decide_evsi}()},
 \code{\link{valuation}()}

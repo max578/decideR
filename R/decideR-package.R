@@ -21,4 +21,5 @@
 .onLoad <- function(libname, pkgname) {
   S7::methods_register()
   registerS3method("print", "grade_band_value", print.grade_band_value)
+  registerS3method("print", "decider_bcr", print.decider_bcr)
 }

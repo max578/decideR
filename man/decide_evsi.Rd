@@ -123,6 +123,7 @@ Making}, 24(2), 207--227. \doi{10.1177/0272989X04263162}
 \code{\link[=decide_evpi]{decide_evpi()}} for the ceiling on any sample's value.
 
 Other value: 
+\code{\link{bcr_crrdc}()},
 \code{\link{decide_bcr}()},
 \code{\link{decide_evpi}()},
 \code{\link{valuation}()}

@@ -1,4 +1,4 @@
-# decideR (development version)
+# decideR 0.2.0
 
 Fixes from the 2026-08-25 ORCHESTRA fitness audit.
 
@@ -20,6 +20,17 @@ Fixes from the 2026-08-25 ORCHESTRA fitness audit.
   is written from: both streams, the present value of each, the net present
   value and the ratio, plus a posterior ratio summary when the benefit stream
   arrives as manifest draws.
+* `bcr_crrdc()`: CRRDC-guideline benefit-cost with mandatory counterfactual,
+  attribution and adoption profile; closes the fleet-audit gap. It refuses --
+  with a message naming the unmet requirement -- to construct a ratio without
+  an explicit counterfactual (a benefits-under-counterfactual stream, or a
+  declared-already-net label), an explicit attribution share in `(0, 1]`, or
+  an adoption profile with lags covering every benefit year (never an
+  implicit 100% uptake). The ratio is reported at the central discount rate
+  and at the CRRDC sensitivity band side by side in a `decider_bcr` object's
+  `rates` table, and an `[unverified]` input abstains -- with every rate's
+  `bcr`/`npv`/`pv_benefits`/`pv_costs` `NA` -- rather than pricing a ratio a
+  funding submission would quote.
 * `valuation`, a new S7 result class for all three. It carries the value beside
   its grounding token and its abstention record, so an `[unverified]` input
   prices out as a typed abstention with `value = NA_real_` -- never a number a

@@ -70,6 +70,7 @@ v@value
 \code{\link[=decide_evpi]{decide_evpi()}}, \code{\link[=decide_evsi]{decide_evsi()}}, \code{\link[=decide_bcr]{decide_bcr()}}.
 
 Other value: 
+\code{\link{bcr_crrdc}()},
 \code{\link{decide_bcr}()},
 \code{\link{decide_evpi}()},
 \code{\link{decide_evsi}()}

@@ -1,6 +1,6 @@
 Package: decideR
 Title: Bayesian Decision-Theoretic Actions under Loss and Hard Constraints
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person(given = "Max",
            family = "Moldovan",
