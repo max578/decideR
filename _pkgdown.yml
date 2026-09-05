@@ -17,6 +17,8 @@ reference:
       Value of information (EVPI, EVSI) and the discounted benefit-cost ratio.
     contents:
       - has_concept("value")
+      - print.decider_bcr
+      - as.data.frame.decider_bcr
   - title: Grounding
     desc: >
       The Independent Oracle Principle provenance vocabulary.
@@ -27,6 +29,9 @@ reference:
       Threshold-economics (grade-band) loss primitives.
     contents:
       - has_concept("loss")
+      - print.grade_band_value
 articles:
   - title: Articles
     navbar: ~
+    contents:
+      - getting-started
