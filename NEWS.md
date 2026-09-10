@@ -1,5 +1,19 @@
 # decideR (development version)
 
+## The manifest tail declines typed
+
+* **A manifest this tail cannot price now raises a typed decline**, classed
+  `decideR_abstention` / `orchestra_refusal`, instead of a bare `stop()`. The
+  fleet predicate `is_orchestra_decline()` reads the class, so an untyped error
+  here defeated the refusal contract every other seam honours: a caller could
+  not tell "the producer issued no number" from "decideR broke". A quorum
+  verdict that reached no quorum is exactly the first case.
+
+* A failure in the *caller's* arguments is still an error. The distinction is
+  deliberate: what the manifest carries is the producer's business and declines
+  typed; what the caller passed is a programming mistake and must not be dressed
+  as an abstention.
+
 ## Documentation
 
 * *Getting started with decideR* was brought to the orchestra's vignette

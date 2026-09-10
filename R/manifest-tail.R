@@ -30,6 +30,20 @@
 # first, then fall back to the `metadata` key, so the tail reads the contract
 # generically and still consumes the federation's current conductor producers.
 # Returns a numeric matrix (draws in rows, candidates in columns) or stops.
+# A manifest this tail cannot price is a typed decline, not a bare error.
+#
+# The fleet predicate `is_orchestra_decline()` reads the condition's class, so an
+# untyped `stop()` here defeats the refusal contract every other seam honours:
+# the caller cannot tell "the producer issued no number" from "decideR broke".
+# A quorum verdict that reached no quorum is exactly the first case -- it carries
+# no draws on purpose -- and it must arrive as a decline the chain can route on.
+.manifest_abstain <- function(reason, message) {
+  stop(structure(
+    class = c("decideR_abstention", "orchestra_refusal", "error", "condition"),
+    list(message = message, call = NULL, reason = reason)
+  ))
+}
+
 .manifest_draws <- function(m, draws_key = "yield_draws") {
   draws <- .manifest_prop(m, "outputs")
   if (is.null(draws)) {
@@ -37,17 +51,20 @@
     draws <- meta[[draws_key]]
   }
   if (is.null(draws)) {
-    stop(
+    .manifest_abstain(
+      "no_draws",
       sprintf(
         "manifest carries no predictive draws in `outputs` or `metadata$%s`",
         draws_key
-      ),
-      call. = FALSE
+      )
     )
   }
   draws <- as.matrix(draws)
   if (!is.numeric(draws) || nrow(draws) == 0L || ncol(draws) == 0L) {
-    stop("manifest draws must be a non-empty numeric matrix", call. = FALSE)
+    .manifest_abstain(
+      "unreadable_draws",
+      "manifest draws must be a non-empty numeric matrix"
+    )
   }
   draws
 }
