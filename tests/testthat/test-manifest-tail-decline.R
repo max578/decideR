@@ -76,3 +76,75 @@ test_that("a grounded payload prices normally", {
   expect_false(d@abstained)
   expect_identical(d@action, "b")
 })
+
+# --- guards added 2026-09-11 after a cross-member probe -----------------------
+#
+# A gpfield spatial-prediction manifest carries `outputs` whose columns are
+# x, y, z, mean, sd and n_support -- coordinates and summaries, not draws. With
+# six candidates the column count matched, so the tail priced a coordinate as an
+# agronomic action and returned a confident number. Nothing in decideR's own
+# suite could see it, because every fixture here is shaped correctly by
+# construction.
+
+.typed_manifest <- function(outputs = NULL, target = NA_character_) {
+  cls <- S7::new_class(
+    "typed_manifest",
+    properties = list(
+      outputs            = S7::new_property(S7::class_any, default = NULL),
+      metadata           = S7::new_property(S7::class_list, default = list()),
+      summary            = S7::new_property(S7::class_any, default = NULL),
+      run_id             = S7::new_property(S7::class_character, default = ""),
+      emitter_package    = S7::new_property(S7::class_character, default = ""),
+      inferential_target = S7::new_property(S7::class_character,
+                                            default = NA_character_)
+    )
+  )
+  cls(outputs = outputs, inferential_target = target)
+}
+
+test_that("outputs whose column names are not the candidate labels decline", {
+  m <- .typed_manifest(
+    outputs = data.frame(x = 1:3, y = 1:3, z = 1:3,
+                         mean = 1:3, sd = 1:3, n_support = 1:3),
+    target = "predictions"
+  )
+  err <- tryCatch(
+    decide_from_manifest(m, candidates = c(0, 25, 50, 75, 100, 125)),
+    condition = function(e) e
+  )
+  expect_s3_class(err, "decideR_abstention")
+  expect_true(orchestraManifest::is_orchestra_decline(err))
+  expect_identical(err$reason, "outputs_not_action_indexed")
+})
+
+test_that("action-indexed outputs still price without a utility", {
+  m <- .typed_manifest(
+    outputs = data.frame(`0` = c(1, 2), `50` = c(3, 4), check.names = FALSE),
+    target = "predictions"
+  )
+  d <- decide_from_manifest(m, candidates = c(0, 50))
+  expect_s7_class(d, decision)
+})
+
+test_that("a structure manifest is declined by target, not by shape", {
+  m <- .typed_manifest(
+    outputs = matrix(c(0, 0, 1, 0), 2, 2),
+    target = "structure"
+  )
+  err <- tryCatch(
+    decide_from_manifest(m, candidates = c("a", "b")),
+    condition = function(e) e
+  )
+  expect_s3_class(err, "decideR_abstention")
+  expect_identical(err$reason, "target_not_priceable")
+})
+
+test_that("a candidate/column shape mismatch declines typed, not bare", {
+  m <- .typed_manifest(outputs = matrix(1:6, nrow = 2), target = "predictions")
+  err <- tryCatch(
+    decide_from_manifest(m, candidates = c("a", "b")),
+    condition = function(e) e
+  )
+  expect_s3_class(err, "decideR_abstention")
+  expect_identical(err$reason, "candidate_shape_mismatch")
+})

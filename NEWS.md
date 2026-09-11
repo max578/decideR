@@ -1,5 +1,34 @@
 # decideR (development version)
 
+## The tail will not price a quantity that is not an action
+
+* **A manifest whose `outputs` columns are named something other than the
+  candidate labels is now declined**, classed `outputs_not_action_indexed`.
+  Positional correspondence between `outputs` columns and `candidates` was an
+  assumption the contract never stated. A `gpfield` spatial-prediction manifest
+  carries `x`, `y`, `z`, `mean`, `sd` and `n_support`; against six candidate
+  nitrogen rates the column count matched, and the tail returned a confident
+  action built from a spatial coordinate and a posterior standard deviation. It
+  now declines. Supply `utility` to say how a column is priced, or emit
+  action-indexed outputs.
+
+* **A `structure` manifest is declined by target**, classed
+  `target_not_priceable`, rather than waiting for a shape check to happen to
+  catch it. A recovered causal graph is not a predictive quantity, and pricing
+  one reads adjacency entries as action values.
+
+* The remaining two bare `stop()` calls in the tail -- a candidate/column shape
+  mismatch and a single posterior column with no `utility` -- are now typed
+  declines (`candidate_shape_mismatch`, `utility_required`), so every outcome
+  of the tail is either a decision or something `is_orchestra_decline()` can
+  read.
+
+* Found by a cross-member probe, not by this package's own suite: every
+  manifest fixture here is shaped correctly by construction, so none of the
+  three paths above could be reached from inside decideR. The workspace
+  conformance suite now drives this tail with a real manifest from each of the
+  eight fleet emitters.
+
 ## The manifest tail declines typed
 
 * **A manifest this tail cannot price now raises a typed decline**, classed

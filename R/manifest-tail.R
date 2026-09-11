@@ -44,7 +44,22 @@
   ))
 }
 
+# A recovered causal graph is a structure, not a predictive quantity. Pricing
+# one would read adjacency entries as action values, so the tail declines it by
+# target rather than waiting for a shape check to happen to catch it.
+.manifest_priceable_target <- function(m) {
+  tgt <- .manifest_prop(m, "inferential_target", default = NA_character_)
+  if (!is.na(tgt) && identical(as.character(tgt), "structure")) {
+    .manifest_abstain(
+      "target_not_priceable",
+      "a `structure` manifest carries a recovered graph, not predictive draws"
+    )
+  }
+  invisible(tgt)
+}
+
 .manifest_draws <- function(m, draws_key = "yield_draws") {
+  .manifest_priceable_target(m)
   draws <- .manifest_prop(m, "outputs")
   if (is.null(draws)) {
     meta <- .manifest_prop(m, "metadata", default = list())
@@ -111,20 +126,41 @@
   # mismatch and still stops.
   recycled_single_column <- ncol(draws) == 1L && n_cand > 1L
   if (!recycled_single_column && ncol(draws) != n_cand) {
-    stop(
+    .manifest_abstain(
+      "candidate_shape_mismatch",
       sprintf(
         "manifest draws have %d columns but `candidates` has %d actions",
         ncol(draws), n_cand
-      ),
-      call. = FALSE
+      )
     )
   }
+  # Positional correspondence between `outputs` columns and `candidates` is an
+  # assumption the contract never states. When the producer named its columns
+  # and those names are not the candidate labels, the columns are some other
+  # quantity that merely happens to fit -- a spatial prediction table, say --
+  # and pricing them returns a confident wrong action rather than an error.
+  if (is.null(utility) && !recycled_single_column) {
+    nms <- colnames(draws)
+    if (!is.null(nms) &&
+        !identical(as.character(nms), as.character(candidates))) {
+      .manifest_abstain(
+        "outputs_not_action_indexed",
+        sprintf(
+          paste0("manifest `outputs` columns (%s) are not the candidate ",
+                 "labels (%s); supply `utility` to say how a column is ",
+                 "priced, or emit action-indexed outputs"),
+          paste(nms, collapse = ", "),
+          paste(as.character(candidates), collapse = ", ")
+        )
+      )
+    }
+  }
   if (recycled_single_column && is.null(utility)) {
-    stop(
-      "manifest draws have a single column and `utility` is NULL -- a ",
-      "single posterior column has no per-candidate utility to read ",
-      "directly; supply `utility = function(action, draws_column)`",
-      call. = FALSE
+    .manifest_abstain(
+      "utility_required",
+      paste0("manifest draws have a single column and `utility` is NULL -- a ",
+             "single posterior column has no per-candidate utility to read ",
+             "directly; supply `utility = function(action, draws_column)`")
     )
   }
 
