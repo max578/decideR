@@ -28,10 +28,10 @@ is_grounded(decision(grounding = grounding_grounded()))
 is_grounded(decision(grounding = grounding_unverified()))
 }
 \seealso{
-Other decisions: 
-\code{\link{decide}()},
-\code{\link{decide_input_rate}()},
-\code{\link{decide_position_size}()},
-\code{\link{decision}()}
+Other decisions:
+\code{\link[=decide]{decide()}},
+\code{\link[=decide_input_rate]{decide_input_rate()}},
+\code{\link[=decide_position_size]{decide_position_size()}},
+\code{\link[=decision]{decision()}}
 }
 \concept{decisions}

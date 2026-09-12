@@ -97,7 +97,7 @@ decide_from_manifest(m, candidates = rates,
 \code{\link[=decide_rate_from_manifest]{decide_rate_from_manifest()}} for the agronomic convenience;
 \code{\link[=decide]{decide()}} for the underlying engine.
 
-Other manifest: 
-\code{\link{decide_rate_from_manifest}()}
+Other manifest:
+\code{\link[=decide_rate_from_manifest]{decide_rate_from_manifest()}}
 }
 \concept{manifest}

@@ -32,7 +32,7 @@ grounding_unverified()
 \seealso{
 \code{\link[=combine_grounding]{combine_grounding()}} for worst-case combination across inputs.
 
-Other grounding: 
-\code{\link{combine_grounding}()}
+Other grounding:
+\code{\link[=combine_grounding]{combine_grounding()}}
 }
 \concept{grounding}

@@ -17,7 +17,7 @@ protein thresholds \code{c(10.5, 11.5, 13)}).}
 outcome on a break clears into the higher band; when \code{TRUE} bands are
 \verb{(lower, upper]}.
 
-[lower, upper)\verb{so an outcome on a break clears into the higher band; when}TRUE\verb{bands are}(lower, upper]: R:lower,\%20upper)\%60\%20so\%20an\%0A\%20\%20outcome\%20on\%20a\%20break\%20clears\%20into\%20the\%20higher\%20band;\%20when\%20\%60TRUE\%60\%20bands\%20are\%0A\%20\%20\%60(lower,\%20upper}
+[lower, upper)\verb{so an outcome on a break clears into the higher band; when}TRUE\verb{bands are}(lower, upper]: R:lower,\%20upper)\%60\%20so\%20an\%0Aoutcome\%20on\%20a\%20break\%20clears\%20into\%20the\%20higher\%20band;\%20when\%20\%60TRUE\%60\%20bands\%20are\%0A\%60(lower,\%20upper}
 
 \item{labels}{Optional character labels for the bands, of length
 \code{length(values)}; defaults to formatted interval strings.}
@@ -56,7 +56,7 @@ v
 \code{\link[=grade_band_utility]{grade_band_utility()}} to turn the schedule into a \code{decide()}
 utility; \code{\link[=decide]{decide()}} for the engine that consumes it.
 
-Other loss: 
-\code{\link{grade_band_utility}()}
+Other loss:
+\code{\link[=grade_band_utility]{grade_band_utility()}}
 }
 \concept{loss}

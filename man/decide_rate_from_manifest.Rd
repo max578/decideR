@@ -71,7 +71,7 @@ decide_rate_from_manifest(m, rates, price_grain = 300, price_input = 1.2)
 \code{\link[=decide_from_manifest]{decide_from_manifest()}} for the generic tail;
 \code{\link[=decide_input_rate]{decide_input_rate()}} for the caller-assembled-matrix form.
 
-Other manifest: 
-\code{\link{decide_from_manifest}()}
+Other manifest:
+\code{\link[=decide_from_manifest]{decide_from_manifest()}}
 }
 \concept{manifest}

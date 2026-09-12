@@ -64,10 +64,10 @@ decide_input_rate(yield_draws, rates, price_grain = 300, price_input = 1.2,
 \code{\link[=decide]{decide()}} for the underlying engine; \code{\link[=decide_position_size]{decide_position_size()}} for
 the trading counterpart.
 
-Other decisions: 
-\code{\link{decide}()},
-\code{\link{decide_position_size}()},
-\code{\link{decision}()},
-\code{\link{is_grounded}()}
+Other decisions:
+\code{\link[=decide]{decide()}},
+\code{\link[=decide_position_size]{decide_position_size()}},
+\code{\link[=decision]{decision()}},
+\code{\link[=is_grounded]{is_grounded()}}
 }
 \concept{decisions}

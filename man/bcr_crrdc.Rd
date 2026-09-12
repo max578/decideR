@@ -123,10 +123,10 @@ bcr_crrdc(bens, csts, counterfactual = "already_net",
 \code{\link[=decide_bcr]{decide_bcr()}} for a benefit-cost ratio without the CRRDC
 mandatory inputs.
 
-Other value: 
-\code{\link{decide_bcr}()},
-\code{\link{decide_evpi}()},
-\code{\link{decide_evsi}()},
-\code{\link{valuation}()}
+Other value:
+\code{\link[=decide_bcr]{decide_bcr()}},
+\code{\link[=decide_evpi]{decide_evpi()}},
+\code{\link[=decide_evsi]{decide_evsi()}},
+\code{\link[=valuation]{valuation()}}
 }
 \concept{value}

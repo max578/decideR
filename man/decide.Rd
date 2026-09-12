@@ -98,10 +98,10 @@ decide(theta, u, candidates = seq(0, 3, by = 0.5),
 \code{\link[=decide_input_rate]{decide_input_rate()}} and \code{\link[=decide_position_size]{decide_position_size()}} for domain
 wrappers; \link{decision} for the returned object.
 
-Other decisions: 
-\code{\link{decide_input_rate}()},
-\code{\link{decide_position_size}()},
-\code{\link{decision}()},
-\code{\link{is_grounded}()}
+Other decisions:
+\code{\link[=decide_input_rate]{decide_input_rate()}},
+\code{\link[=decide_position_size]{decide_position_size()}},
+\code{\link[=decision]{decision()}},
+\code{\link[=is_grounded]{is_grounded()}}
 }
 \concept{decisions}

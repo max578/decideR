@@ -12,12 +12,18 @@ Maps a posterior distribution or an 'orchestra_manifest' inference result to an 
 Useful links:
 \itemize{
   \item \url{https://github.com/max578/decideR}
+  \item \url{https://max578.github.io/decideR}
   \item Report bugs at \url{https://github.com/max578/decideR/issues}
 }
 
 }
 \author{
 \strong{Maintainer}: Max Moldovan \email{max.moldovan@adelaide.edu.au} (\href{https://orcid.org/0000-0001-9680-8474}{ORCID})
+
+Authors:
+\itemize{
+  \item Max Moldovan \email{max.moldovan@adelaide.edu.au} (\href{https://orcid.org/0000-0001-9680-8474}{ORCID})
+}
 
 }
 \keyword{internal}

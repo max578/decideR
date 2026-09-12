@@ -33,7 +33,7 @@ combine_grounding(c(grounding_grounded(), grounding_unverified()))
 \seealso{
 \link{grounding_tokens} for the two canonical tokens.
 
-Other grounding: 
+Other grounding:
 \code{\link{grounding_tokens}}
 }
 \concept{grounding}

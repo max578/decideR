@@ -82,10 +82,10 @@ Kelly, J. L. (1956). A New Interpretation of Information Rate.
 \code{\link[=decide]{decide()}} for the underlying engine; \code{\link[=decide_input_rate]{decide_input_rate()}} for the
 agronomic counterpart.
 
-Other decisions: 
-\code{\link{decide}()},
-\code{\link{decide_input_rate}()},
-\code{\link{decision}()},
-\code{\link{is_grounded}()}
+Other decisions:
+\code{\link[=decide]{decide()}},
+\code{\link[=decide_input_rate]{decide_input_rate()}},
+\code{\link[=decision]{decision()}},
+\code{\link[=is_grounded]{is_grounded()}}
 }
 \concept{decisions}

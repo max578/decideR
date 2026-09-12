@@ -67,10 +67,10 @@ d@action
 \seealso{
 \code{\link[=decide]{decide()}} and the reference decisions that produce this object.
 
-Other decisions: 
-\code{\link{decide}()},
-\code{\link{decide_input_rate}()},
-\code{\link{decide_position_size}()},
-\code{\link{is_grounded}()}
+Other decisions:
+\code{\link[=decide]{decide()}},
+\code{\link[=decide_input_rate]{decide_input_rate()}},
+\code{\link[=decide_position_size]{decide_position_size()}},
+\code{\link[=is_grounded]{is_grounded()}}
 }
 \concept{decisions}

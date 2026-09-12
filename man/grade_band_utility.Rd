@@ -51,7 +51,7 @@ decide(protein, u, candidates = seq(0, 150, by = 25),
 \seealso{
 \code{\link[=grade_band_value]{grade_band_value()}} for the schedule; \code{\link[=decide]{decide()}} for the engine.
 
-Other loss: 
-\code{\link{grade_band_value}()}
+Other loss:
+\code{\link[=grade_band_value]{grade_band_value()}}
 }
 \concept{loss}

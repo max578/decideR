@@ -96,10 +96,10 @@ Boston: Harvard University Graduate School of Business Administration.
 \code{\link[=decide_evsi]{decide_evsi()}} for the value of one finite sample;
 \code{\link[=decide_from_manifest]{decide_from_manifest()}} for the decision the value is measured against.
 
-Other value: 
-\code{\link{bcr_crrdc}()},
-\code{\link{decide_bcr}()},
-\code{\link{decide_evsi}()},
-\code{\link{valuation}()}
+Other value:
+\code{\link[=bcr_crrdc]{bcr_crrdc()}},
+\code{\link[=decide_bcr]{decide_bcr()}},
+\code{\link[=decide_evsi]{decide_evsi()}},
+\code{\link[=valuation]{valuation()}}
 }
 \concept{value}

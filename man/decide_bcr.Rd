@@ -97,10 +97,10 @@ decide_bcr(benefits = c(0, 210), costs = c(100, 0), discount_rate = 0.05)
 \code{\link[=decide_evsi]{decide_evsi()}} for the value of the next study rather than of the
 whole programme.
 
-Other value: 
-\code{\link{bcr_crrdc}()},
-\code{\link{decide_evpi}()},
-\code{\link{decide_evsi}()},
-\code{\link{valuation}()}
+Other value:
+\code{\link[=bcr_crrdc]{bcr_crrdc()}},
+\code{\link[=decide_evpi]{decide_evpi()}},
+\code{\link[=decide_evsi]{decide_evsi()}},
+\code{\link[=valuation]{valuation()}}
 }
 \concept{value}
