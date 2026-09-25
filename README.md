@@ -76,6 +76,17 @@ See `vignette("getting-started")` for the full walk-through, including
 the manifest-native pipeline tail and the grade-band loss worked end to
 end.
 
+## Contributing
+
+Bug reports and suggestions are welcome through the
+[issue tracker](https://github.com/max578/decideR/issues).
+
+## Citation
+
+```r
+citation("decideR")
+```
+
 ## License
 
 This package is released under: MIT + file LICENSE.

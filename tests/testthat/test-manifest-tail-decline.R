@@ -27,8 +27,9 @@ test_that("a manifest carrying no draws declines typed, not bare", {
   )
   expect_s3_class(err, "decideR_abstention")
   expect_s3_class(err, "orchestra_refusal")
-  expect_true(orchestraManifest::is_orchestra_decline(err))
   expect_identical(err$reason, "no_draws")
+  skip_if_not_installed("orchestraManifest")
+  expect_true(orchestraManifest::is_orchestra_decline(err))
 })
 
 test_that("a manifest whose payload is not numeric declines typed", {
@@ -38,8 +39,9 @@ test_that("a manifest whose payload is not numeric declines typed", {
     condition = function(e) e
   )
   expect_s3_class(err, "decideR_abstention")
-  expect_true(orchestraManifest::is_orchestra_decline(err))
   expect_identical(err$reason, "unreadable_draws")
+  skip_if_not_installed("orchestraManifest")
+  expect_true(orchestraManifest::is_orchestra_decline(err))
 })
 
 test_that("a caller-argument error is still an error, not a decline", {
@@ -51,6 +53,7 @@ test_that("a caller-argument error is still an error, not a decline", {
     condition = function(e) e
   )
   expect_s3_class(err, "error")
+  skip_if_not_installed("orchestraManifest")
   expect_false(orchestraManifest::is_orchestra_decline(err))
 })
 
@@ -113,8 +116,9 @@ test_that("outputs whose column names are not the candidate labels decline", {
     condition = function(e) e
   )
   expect_s3_class(err, "decideR_abstention")
-  expect_true(orchestraManifest::is_orchestra_decline(err))
   expect_identical(err$reason, "outputs_not_action_indexed")
+  skip_if_not_installed("orchestraManifest")
+  expect_true(orchestraManifest::is_orchestra_decline(err))
 })
 
 test_that("action-indexed outputs still price without a utility", {

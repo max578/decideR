@@ -8,9 +8,9 @@
 # before consumption, not a decideR-authored approximation of the contract's
 # shape.
 #
-# The workspace contract lives outside this package (decideR takes no
-# dependency on it -- CLAUDE.md workspace invariant: the contract is a
-# composition-layer artefact, never installed). This test is therefore
+# The workspace contract lives outside this package and decideR does not
+# depend on it: the contract is a source file shared by the member packages,
+# not an installed package. This test is therefore
 # environment-conditional: it skips cleanly wherever the workspace is not
 # checked out beside the package (a fresh clone, CI, CRAN), and runs for real
 # whenever the ORCHESTRA_dev sibling workspace is present -- the layout every

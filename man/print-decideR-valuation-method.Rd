@@ -3,10 +3,6 @@
 \name{print,decideR::valuation-method}
 \alias{print,decideR::valuation-method}
 \title{Print a valuation}
-\usage{
-## S7 method for class <decideR::valuation>
-print(x, ...)
-}
 \arguments{
 \item{x}{A \link{valuation}.}
 
@@ -22,3 +18,4 @@ Print a valuation
 print(valuation(value = 12.4, type = "evpi",
                 grounding = grounding_grounded()))
 }
+\concept{value}

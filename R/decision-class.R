@@ -144,6 +144,8 @@ is_grounded <- function(x) {
 #' @return `x`, invisibly.
 #' @examples
 #' print(decision(action_label = "flat", grounding = grounding_grounded()))
+#' @concept decisions
+#' @usage NULL
 #' @export
 S7::method(print, decision) <- function(x, ...) {
   status <- if (isTRUE(x@abstained)) {

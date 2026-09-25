@@ -3,10 +3,6 @@
 \name{print,decideR::decision-method}
 \alias{print,decideR::decision-method}
 \title{Print a decision}
-\usage{
-## S7 method for class <decideR::decision>
-print(x, ...)
-}
 \arguments{
 \item{x}{A \link{decision}.}
 
@@ -21,3 +17,4 @@ Print a decision
 \examples{
 print(decision(action_label = "flat", grounding = grounding_grounded()))
 }
+\concept{decisions}

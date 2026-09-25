@@ -123,6 +123,8 @@ valuation <- S7::new_class(
 #' @examples
 #' print(valuation(value = 12.4, type = "evpi",
 #'                 grounding = grounding_grounded()))
+#' @concept value
+#' @usage NULL
 #' @export
 S7::method(print, valuation) <- function(x, ...) {
   status <- if (isTRUE(x@abstained)) {
