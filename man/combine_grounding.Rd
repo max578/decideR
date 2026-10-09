@@ -23,8 +23,9 @@ facts it consumes.
 }
 \details{
 Each token is validated against the canonical vocabulary, so a synonym such
-as \code{"unverified"} or \code{"ungrounded"} is rejected loudly rather than silently
-mistaken for a grounded fact.
+as \code{"unverified"} is rejected loudly rather than silently mistaken for a
+grounded fact. The token written by decideR 0.2.0 and earlier is accepted
+as un-grounded.
 }
 \examples{
 combine_grounding(c(grounding_grounded(), grounding_grounded()))

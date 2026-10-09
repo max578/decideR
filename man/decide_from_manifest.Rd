@@ -55,7 +55,7 @@ draws by hand.
 }
 \details{
 The grounding label rides from the producer through the decision: a manifest
-whose payload is \verb{[unverified]} forces an abstention to \code{safe_action},
+whose payload is ungrounded forces an abstention to \code{safe_action},
 regardless of how attractive the draws look. This is the Independent Oracle
 Principle firewall applied at the pipeline boundary -- decideR never mints a
 confident recommendation on an upstream fact the producer did not ground.

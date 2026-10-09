@@ -2,7 +2,7 @@
 #
 # A consensus manifest that reached no quorum carries no draws on purpose. The
 # tail used to meet that with a bare `stop()`, so `is_orchestra_decline()`
-# returned FALSE and the chain could not tell a producer's honest abstention
+# returned FALSE and the chain could not tell a producer's own abstention
 # from a broken consumer.
 
 .mini_manifest <- function(outputs = NULL, metadata = list()) {

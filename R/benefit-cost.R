@@ -6,7 +6,7 @@
 # question a funder asks is whether the discounted benefits repay the
 # discounted costs. `decide_bcr()` is that arithmetic, made auditable -- every
 # component the ratio is assembled from is returned beside it -- and made
-# honest: a benefit stream whose provenance is `[unverified]` prices out as a
+# explicit: a benefit stream whose provenance is ungrounded prices out as a
 # typed abstention rather than as a ratio a funding submission would quote.
 
 # Discount factors for `horizon` periods indexed t = 0, 1, ..., horizon - 1.
@@ -71,7 +71,7 @@
 #' `metadata$grounding` or `summary$metrics$grounding`), with draws in rows and
 #' periods in columns. The point estimate then uses the posterior mean stream,
 #' and the posterior distribution of the ratio is summarised in
-#' `components$bcr_quantiles`. An `[unverified]` manifest returns an abstained
+#' `components$bcr_quantiles`. An ungrounded manifest returns an abstained
 #' valuation, never a ratio.
 #'
 #' @param benefits The benefit stream: a numeric vector, one value per period

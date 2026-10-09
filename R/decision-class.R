@@ -3,7 +3,7 @@
 # =============================================================================
 # `decision` is decideR's native result type: the chosen action, the expected
 # utility that justified it, the full candidate ledger, and -- carried beside
-# the numbers, never inferred from them -- the grounding label and the honest
+# the numbers, never inferred from them -- the grounding label and the
 # abstention record. It is an S7 object so that the ORCHESTRA composition layer
 # can adapt it to an `orchestra_manifest` without decideR depending on the
 # contract package.
@@ -13,7 +13,7 @@
 #' The object returned by [decide()] and the reference decisions. It records
 #' the chosen `action`, the `expected_utility` that selected it, the complete
 #' `candidates` ledger (every action with its expected utility and
-#' feasibility), and the two honesty fields the Independent Oracle Principle
+#' feasibility), and the two provenance fields the Independent Oracle Principle
 #' requires: `grounding` (`grounding_grounded()` or `grounding_unverified()`)
 #' and the abstention record (`abstained`, `abstain_reason`). When a decision
 #' abstains the `action` is the caller's `safe_action`, not the utility-maximal
@@ -22,7 +22,7 @@
 #' @param action The chosen action. The `safe_action` when `abstained` is
 #'   `TRUE`.
 #' @param action_label A short human-readable label for the action; suffixed
-#'   `"[unverified]"` when the grounding is not grounded.
+#'   `"ungrounded"` when the grounding is not grounded.
 #' @param expected_utility The expected (mean-over-draws) utility of the chosen
 #'   action, or `NA_real_` when abstained.
 #' @param candidates A `data.frame` with one row per candidate action:
@@ -52,11 +52,9 @@ decision <- S7::new_class(
     expected_utility = S7::new_property(S7::class_numeric,
                                         default = NA_real_),
     candidates       = S7::new_property(S7::class_any, default = NULL),
-    # Literal rather than grounding_unverified() so the class definition does
-    # not depend on grounding.R's load order; the validator enforces the token.
     grounding        = S7::new_property(
       S7::class_character,
-      default = "[unverified]"
+      default = "ungrounded"
     ),
     abstained        = S7::new_property(S7::class_logical, default = FALSE),
     abstain_reason   = S7::new_property(S7::class_character,
@@ -69,7 +67,7 @@ decision <- S7::new_class(
   ),
   validator = function(self) {
     if (length(self@grounding) != 1L ||
-          !self@grounding %in% c(grounding_grounded(), grounding_unverified())) {
+          !self@grounding %in% .canonical_tokens()) {
       return("@grounding must be exactly one canonical grounding token")
     }
     if (length(self@abstained) != 1L || is.na(self@abstained)) {

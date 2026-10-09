@@ -143,7 +143,7 @@ test_that("decide_from_manifest's abstention also carries the refusal-contract c
   expect_true(any(grepl("_(refusal|abstention)$", class(d))))
 })
 
-test_that("a manifest with no grounding token defaults to un-grounded (honest IOP)", {
+test_that("a manifest with no grounding token defaults to un-grounded (IOP)", {
   m <- .fake_manifest(
     outputs = matrix(stats::rnorm(300L), nrow = 100L, ncol = 3L),
     metadata = list()                                  # no grounding recorded

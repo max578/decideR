@@ -272,5 +272,5 @@ test_that("print.decider_bcr() and as.data.frame.decider_bcr() work", {
                         counterfactual_label = "no intervention",
                         attribution = 1, adoption = up)
   expect_output(print(abstained), "ABSTAINED")
-  expect_output(print(abstained), "\\[unverified\\]")
+  expect_output(print(abstained), "\\[ungrounded\\]")
 })

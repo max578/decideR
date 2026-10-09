@@ -21,7 +21,7 @@ test_that("ungrounded input abstains to the safe action (IOP firewall)", {
   expect_identical(d@abstain_reason, "input_ungrounded")
   expect_identical(d@action, 0)
   expect_false(is_grounded(d))
-  expect_match(d@action_label, "\\[unverified\\]")
+  expect_match(d@action_label, "\\[ungrounded\\]")
 })
 
 test_that("one unverified input among several taints the decision", {

@@ -5,7 +5,7 @@
 # evidence is worth (`decide_evpi()`, `decide_evsi()`) and whether a stream of
 # benefits repays a stream of costs (`decide_bcr()`). It is deliberately NOT a
 # `decision` -- nothing is chosen here, a quantity is priced -- but it carries
-# the same two honesty fields, so an un-grounded input prices out as a typed
+# the same two provenance fields, so an un-grounded input prices out as a typed
 # abstention rather than as a number a reader would spend money on.
 
 #' A priced quantity with grounding and abstention
@@ -13,7 +13,7 @@
 #' The object returned by [decide_evpi()], [decide_evsi()] and [decide_bcr()].
 #' It records the priced `value`, the `type` of valuation that produced it, the
 #' arithmetic `components` a reader needs in order to audit that value, and the
-#' two Independent Oracle Principle honesty fields: `grounding`, and the
+#' two Independent Oracle Principle provenance fields: `grounding`, and the
 #' abstention record (`abstained`, `abstain_reason`). When a valuation abstains,
 #' `value` is `NA_real_` -- decideR never mints a dollar figure on evidence its
 #' producer did not ground.
@@ -53,10 +53,8 @@ valuation <- S7::new_class(
     type           = S7::new_property(S7::class_character,
                                       default = NA_character_),
     components     = S7::new_property(S7::class_list, default = list()),
-    # Literal rather than grounding_unverified() so the class definition does
-    # not depend on grounding.R's load order; the validator enforces the token.
     grounding      = S7::new_property(S7::class_character,
-                                      default = "[unverified]"),
+                                      default = "ungrounded"),
     abstained      = S7::new_property(S7::class_logical, default = FALSE),
     abstain_reason = S7::new_property(S7::class_character,
                                       default = NA_character_),
@@ -68,8 +66,7 @@ valuation <- S7::new_class(
   ),
   validator = function(self) {
     if (length(self@grounding) != 1L ||
-          !self@grounding %in% c(grounding_grounded(),
-                                 grounding_unverified())) {
+          !self@grounding %in% .canonical_tokens()) {
       return("@grounding must be exactly one canonical grounding token")
     }
     if (length(self@abstained) != 1L || is.na(self@abstained)) {

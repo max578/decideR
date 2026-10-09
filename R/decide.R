@@ -62,7 +62,7 @@
   } else if (all(is.na(eu[feasible]))) {
     # Degenerate evidence: every feasible candidate's expected utility is
     # NA/NaN (e.g. a utility function that returns NaN for every draw). A
-    # decision engine whose premise is honest abstention must decline here
+    # decision engine built to abstain on weak evidence must decline here
     # rather than fail with an opaque base-R error from `which.max()` on an
     # empty result.
     reason <- "degenerate_utility"
@@ -116,7 +116,7 @@
     eu_sel <- eu[best_idx]
   }
   if (!.is_grounded(grounding)) {
-    label <- paste0(label, " ", grounding_unverified())
+    label <- paste0(label, " [", grounding_unverified(), "]")
   }
 
   out <- decision(

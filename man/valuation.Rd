@@ -8,7 +8,7 @@ valuation(
   value = NA_real_,
   type = NA_character_,
   components = list(),
-  grounding = "[unverified]",
+  grounding = "ungrounded",
   abstained = FALSE,
   abstain_reason = NA_character_,
   baseline = NULL,
@@ -49,7 +49,7 @@ A \code{valuation} S7 object.
 The object returned by \code{\link[=decide_evpi]{decide_evpi()}}, \code{\link[=decide_evsi]{decide_evsi()}} and \code{\link[=decide_bcr]{decide_bcr()}}.
 It records the priced \code{value}, the \code{type} of valuation that produced it, the
 arithmetic \code{components} a reader needs in order to audit that value, and the
-two Independent Oracle Principle honesty fields: \code{grounding}, and the
+two Independent Oracle Principle provenance fields: \code{grounding}, and the
 abstention record (\code{abstained}, \code{abstain_reason}). When a valuation abstains,
 \code{value} is \code{NA_real_} -- decideR never mints a dollar figure on evidence its
 producer did not ground.

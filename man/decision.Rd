@@ -9,7 +9,7 @@ decision(
   action_label = NA_character_,
   expected_utility = NA_real_,
   candidates = NULL,
-  grounding = "[unverified]",
+  grounding = "ungrounded",
   abstained = FALSE,
   abstain_reason = NA_character_,
   safe_action = NULL,
@@ -23,7 +23,7 @@ decision(
 \code{TRUE}.}
 
 \item{action_label}{A short human-readable label for the action; suffixed
-\code{"[unverified]"} when the grounding is not grounded.}
+\code{"ungrounded"} when the grounding is not grounded.}
 
 \item{expected_utility}{The expected (mean-over-draws) utility of the chosen
 action, or \code{NA_real_} when abstained.}
@@ -53,7 +53,7 @@ A \code{decision} S7 object.
 The object returned by \code{\link[=decide]{decide()}} and the reference decisions. It records
 the chosen \code{action}, the \code{expected_utility} that selected it, the complete
 \code{candidates} ledger (every action with its expected utility and
-feasibility), and the two honesty fields the Independent Oracle Principle
+feasibility), and the two provenance fields the Independent Oracle Principle
 requires: \code{grounding} (\code{grounding_grounded()} or \code{grounding_unverified()})
 and the abstention record (\code{abstained}, \code{abstain_reason}). When a decision
 abstains the \code{action} is the caller's \code{safe_action}, not the utility-maximal

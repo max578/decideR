@@ -87,7 +87,7 @@
 # Read the grounding token a manifest carries for its payload. The federation's
 # convention records it at `metadata$grounding`, with the typed
 # `summary$metrics$grounding` as the secondary home. Anything else -- including
-# a manifest that never set a token -- is treated as un-grounded, the honest
+# a manifest that never set a token -- is treated as un-grounded, the
 # Independent Oracle Principle default. The returned token is validated against
 # the canonical vocabulary by the decision engine downstream.
 .manifest_grounding <- function(m) {
@@ -238,7 +238,7 @@
 #' draws by hand.
 #'
 #' The grounding label rides from the producer through the decision: a manifest
-#' whose payload is `[unverified]` forces an abstention to `safe_action`,
+#' whose payload is ungrounded forces an abstention to `safe_action`,
 #' regardless of how attractive the draws look. This is the Independent Oracle
 #' Principle firewall applied at the pipeline boundary -- decideR never mints a
 #' confident recommendation on an upstream fact the producer did not ground.

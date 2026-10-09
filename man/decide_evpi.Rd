@@ -58,7 +58,7 @@ the grower or the agency can actually take, not within a wider hypothetical
 set.
 
 Grounding rides from the producer exactly as it does for a decision: an
-\verb{[unverified]} manifest returns an abstained \code{valuation} with
+ungrounded manifest returns an abstained \code{valuation} with
 \code{abstain_reason = "input_ungrounded"} and \code{value = NA_real_}. The other
 blocking reasons are \code{no_feasible_action}, \code{low_ess} and
 \code{degenerate_utility}. An \code{insufficient_evidence} baseline decision is \emph{not}

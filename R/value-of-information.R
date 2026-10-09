@@ -8,7 +8,7 @@
 # per-candidate utility matrix the manifest tail already assembles, so the
 # value of information and the decision it would inform are computed from one
 # object rather than from two hand-aligned ones. Both refuse to price
-# un-grounded evidence: an `[unverified]` manifest returns a typed abstention,
+# un-grounded evidence: an ungrounded manifest returns a typed abstention,
 # never a dollar figure.
 
 # Abstention reasons that make a value of information meaningless. NOTE the
@@ -65,7 +65,7 @@
 #' set.
 #'
 #' Grounding rides from the producer exactly as it does for a decision: an
-#' `[unverified]` manifest returns an abstained `valuation` with
+#' ungrounded manifest returns an abstained `valuation` with
 #' `abstain_reason = "input_ungrounded"` and `value = NA_real_`. The other
 #' blocking reasons are `no_feasible_action`, `low_ess` and
 #' `degenerate_utility`. An `insufficient_evidence` baseline decision is *not*

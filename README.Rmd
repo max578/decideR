@@ -14,7 +14,7 @@ set.seed(1L)
 `decideR` is the shared Bayesian decision layer of the ORCHESTRA analytics
 framework. It maps a posterior into an action under an explicit utility and a
 hard feasibility constraint, returning the action together with a grounding
-label and an honest abstention when the evidence will not support a decision.
+label and an abstention when the evidence will not support a decision.
 The grounding label is combined worst-case across inputs, so a decision resting
 on an unverified external fact is downgraded to abstention -- the Independent
 Oracle Principle -- rather than asserted with false confidence.

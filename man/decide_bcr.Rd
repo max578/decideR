@@ -76,7 +76,7 @@ tail uses (\code{outputs}, then \code{metadata[[draws_key]]}; grounding from
 \code{metadata$grounding} or \code{summary$metrics$grounding}), with draws in rows and
 periods in columns. The point estimate then uses the posterior mean stream,
 and the posterior distribution of the ratio is summarised in
-\code{components$bcr_quantiles}. An \verb{[unverified]} manifest returns an abstained
+\code{components$bcr_quantiles}. An ungrounded manifest returns an abstained
 valuation, never a ratio.
 }
 \examples{

@@ -21,9 +21,8 @@ token for a fact that has been checked against its external authority;
 default until a grounding check proves otherwise.
 }
 \details{
-The square brackets in \code{"[unverified]"} are deliberate and load-bearing:
-they make an un-grounded label visually unmissable when it surfaces in a
-printed decision, a verdict string, or a report.
+\code{grounding_unverified()} returns \code{"ungrounded"}. The token written by
+decideR 0.2.0 and earlier is still accepted wherever a token is read.
 }
 \examples{
 grounding_grounded()

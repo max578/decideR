@@ -8,8 +8,9 @@
 # not drift on the grounding label. A fact is `grounded` only once it has been
 # diffed against the external authority that owns it; self-consistency,
 # golden fixtures, and inter-member agreement do not ground anything. Every
-# other state is `[unverified]` and is treated as un-grounded by every
-# decision built here.
+# other state is `"ungrounded"` and is treated as un-grounded by every
+# decision built here. decideR 0.2.0 and earlier wrote a bracketed token for
+# that state; it is still accepted on input.
 
 #' Canonical grounding tokens
 #'
@@ -19,9 +20,8 @@
 #' `grounding_unverified()` returns the token for everything else, which is the
 #' default until a grounding check proves otherwise.
 #'
-#' The square brackets in `"[unverified]"` are deliberate and load-bearing:
-#' they make an un-grounded label visually unmissable when it surfaces in a
-#' printed decision, a verdict string, or a report.
+#' `grounding_unverified()` returns `"ungrounded"`. The token written by
+#' decideR 0.2.0 and earlier is still accepted wherever a token is read.
 #'
 #' @return A length-one character string holding the canonical token.
 #' @examples
@@ -38,7 +38,13 @@ grounding_grounded <- function() "grounded"
 
 #' @rdname grounding_tokens
 #' @export
-grounding_unverified <- function() "[unverified]"
+grounding_unverified <- function() "ungrounded"
+
+# Every token read as un-grounded: the current one and the one written by
+# decideR 0.2.0 and earlier.
+.ungrounded_tokens <- c("ungrounded", "[unverified]")
+
+.canonical_tokens <- function() c(grounding_grounded(), .ungrounded_tokens)
 
 # -----------------------------------------------------------------------------
 # Worst-case combination
@@ -53,8 +59,9 @@ grounding_unverified <- function() "[unverified]"
 #' facts it consumes.
 #'
 #' Each token is validated against the canonical vocabulary, so a synonym such
-#' as `"unverified"` or `"ungrounded"` is rejected loudly rather than silently
-#' mistaken for a grounded fact.
+#' as `"unverified"` is rejected loudly rather than silently mistaken for a
+#' grounded fact. The token written by decideR 0.2.0 and earlier is accepted
+#' as un-grounded.
 #'
 #' @param tokens A character vector of grounding tokens, each either
 #'   `grounding_grounded()` or `grounding_unverified()`.
@@ -68,7 +75,7 @@ grounding_unverified <- function() "[unverified]"
 #' @export
 combine_grounding <- function(tokens) {
   tokens <- as.character(tokens)
-  ok <- tokens %in% c(grounding_grounded(), grounding_unverified())
+  ok <- tokens %in% .canonical_tokens()
   if (!all(ok)) {
     bad <- unique(tokens[!ok])
     stop(
