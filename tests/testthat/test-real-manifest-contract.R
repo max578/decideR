@@ -10,32 +10,20 @@
 #
 # The workspace contract lives outside this package and decideR does not
 # depend on it: the contract is a source file shared by the member packages,
-# not an installed package. This test is therefore
-# environment-conditional: it skips cleanly wherever the workspace is not
-# checked out beside the package (a fresh clone, CI, CRAN), and runs for real
-# whenever the ORCHESTRA_dev sibling workspace is present -- the layout every
-# ORCHESTRA member package is developed in. `DECIDER_ORCHESTRA_MANIFEST_R`
-# overrides the path explicitly.
+# not an installed package. This test therefore runs only when
+# `DECIDER_ORCHESTRA_MANIFEST_R` names that file, and skips otherwise (a fresh
+# clone, CI, CRAN).
 
 .locate_orchestra_manifest_contract <- function() {
-  candidates <- c(
-    Sys.getenv("DECIDER_ORCHESTRA_MANIFEST_R", unset = NA_character_),
-    # <pkg root>/../../ORCHESTRA_dev/integration/orchestra_manifest.R -- the
-    # standard sibling-workspace layout (<parent>/decideR_dev/decideR and
-    # <parent>/ORCHESTRA_dev side by side).
-    testthat::test_path("..", "..", "..", "..", "ORCHESTRA_dev",
-                        "integration", "orchestra_manifest.R")
-  )
-  candidates <- candidates[!is.na(candidates)]
-  hit <- candidates[file.exists(candidates)][1L]
-  if (length(hit) == 0L || is.na(hit)) NULL else hit
+  path <- Sys.getenv("DECIDER_ORCHESTRA_MANIFEST_R", unset = NA_character_)
+  if (is.na(path) || !file.exists(path)) NULL else path
 }
 
 test_that("decide_rate_from_manifest() closes the pipeline on a REAL orchestra_manifest (D-08, IOP)", {
   contract_path <- .locate_orchestra_manifest_contract()
   testthat::skip_if(
     is.null(contract_path),
-    "ORCHESTRA_dev workspace contract not found beside the package -- skipping the real-manifest IOP test"
+    "DECIDER_ORCHESTRA_MANIFEST_R does not name the workspace contract file"
   )
   testthat::skip_if_not_installed("digest")
 
