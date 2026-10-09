@@ -1,4 +1,10 @@
-# decideR (development version)
+# decideR 0.3.0
+
+## Grounding token
+
+* `grounding_unverified()` now returns `"ungrounded"`; the bracketed token of
+  0.2.0 and earlier is still accepted by `combine_grounding()`, `decision()`
+  and `valuation()`.
 
 ## The tail will not price a quantity that is not an action
 
@@ -80,11 +86,11 @@ Fixes from the 2026-08-25 ORCHESTRA fitness audit.
   an adoption profile with lags covering every benefit year (never an
   implicit 100% uptake). The ratio is reported at the central discount rate
   and at the CRRDC sensitivity band side by side in a `decider_bcr` object's
-  `rates` table, and an `[unverified]` input abstains -- with every rate's
+  `rates` table, and an ungrounded input abstains -- with every rate's
   `bcr`/`npv`/`pv_benefits`/`pv_costs` `NA` -- rather than pricing a ratio a
   funding submission would quote.
 * `valuation`, a new S7 result class for all three. It carries the value beside
-  its grounding token and its abstention record, so an `[unverified]` input
+  its grounding token and its abstention record, so an ungrounded input
   prices out as a typed abstention with `value = NA_real_` -- never a number a
   reader would spend money on. An abstained valuation is class-stamped
   `decideR_abstention`, so the federation's `is_orchestra_decline()` predicate
@@ -203,7 +209,7 @@ development series exercised.
   upstream `orchestra_manifest` into a `decision` by reading the predictive
   draws and the producer's grounding token straight off the manifest, then
   routing them through the same expected-utility engine `decide()` uses. The
-  grounding rides from the producer through the decision, so an `[unverified]`
+  grounding rides from the producer through the decision, so an ungrounded
   payload forces an abstention at the pipeline boundary. `decideR` does not
   depend on the contract package: the manifest is read through its public S7
   properties (`outputs`, `metadata`, `summary`), so the tail consumes any
@@ -234,5 +240,5 @@ development series exercised.
   `is_grounded()` methods.
 * `grounding_grounded()`, `grounding_unverified()`, and `combine_grounding()`
   are the canonical provenance vocabulary, hardcoded to match the ORCHESTRA
-  federation's `[unverified]` / `grounded` tokens (worst-case combination: one
+  federation's ungrounded / `grounded` tokens (worst-case combination: one
   un-grounded input taints the decision).
