@@ -40,7 +40,7 @@ A \link{decision} object whose \code{action} is the chosen rate.
 The agronomic manifest tail. Where \code{\link[=decide_input_rate]{decide_input_rate()}} takes a yield-draws
 matrix assembled by the caller, \code{decide_rate_from_manifest()} sources that
 matrix -- and the grounding token -- directly from an \code{orchestra_manifest}
-emitted upstream (a PESTO inversion or a TACI yield-response posterior). It is
+emitted upstream (a PESTO inversion or a mechanistic yield-response posterior). It is
 the formalised crop-pipeline tail: a yield posterior in, a profit-optimal,
 grounding-aware nitrogen-rate decision out. The grounding rides from the
 producer, so an un-grounded yield posterior forces the status-quo rate.

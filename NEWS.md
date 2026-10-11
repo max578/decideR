@@ -1,3 +1,7 @@
+# decideR 0.3.1
+
+* Documentation names kernR's mechanism-consistency test directly.
+
 # decideR 0.3.0
 
 ## Grounding token

@@ -46,7 +46,7 @@ A \link{decision} object whose \code{action} is the chosen rate.
 \description{
 A reference decision for the agronomic domain. Given posterior draws of yield
 at each candidate input rate -- the kind of object a mechanistic-simulator
-inversion (PESTO) or a causal test (TACI) emits -- it selects the rate that
+inversion (PESTO) or a causal test (kernR) emits -- it selects the rate that
 maximises expected profit, \eqn{E[p_y\,y(r) - p_r\,r]}, where \eqn{p_y} is the
 grain price and \eqn{p_r} the input price. It abstains to \code{safe_rate} when the
 yield evidence is un-grounded or the leading rate is not decisive.

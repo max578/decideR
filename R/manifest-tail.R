@@ -2,7 +2,7 @@
 # The manifest-native pipeline tail
 # =============================================================================
 # decideR is the standard tail of an ORCHESTRA pipeline: an upstream member
-# (PESTO inversion, a kernR TACI test, a flexyBayes posterior) emits an
+# (PESTO inversion, a kernR mechanism-consistency test, a flexyBayes posterior) emits an
 # `orchestra_manifest` carrying predictive draws, and decideR turns that
 # manifest into a `decision`. These functions are that bridge. They read the
 # manifest by its public contract -- the draws matrix and the grounding token --
@@ -313,7 +313,7 @@ decide_from_manifest <- function(manifest, candidates, utility = NULL,
 #' The agronomic manifest tail. Where [decide_input_rate()] takes a yield-draws
 #' matrix assembled by the caller, `decide_rate_from_manifest()` sources that
 #' matrix -- and the grounding token -- directly from an `orchestra_manifest`
-#' emitted upstream (a PESTO inversion or a TACI yield-response posterior). It is
+#' emitted upstream (a PESTO inversion or a mechanistic yield-response posterior). It is
 #' the formalised crop-pipeline tail: a yield posterior in, a profit-optimal,
 #' grounding-aware nitrogen-rate decision out. The grounding rides from the
 #' producer, so an un-grounded yield posterior forces the status-quo rate.
