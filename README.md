@@ -1,5 +1,13 @@
 
-# decideR
+# decideR <img src="man/figures/logo.png" align="right" height="139" alt="decideR logo" />
+
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/max578/decideR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/max578/decideR/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/max578/decideR/graph/badge.svg)](https://app.codecov.io/gh/max578/decideR)
+[![r-universe](https://max578.r-universe.dev/badges/decideR)](https://max578.r-universe.dev/decideR)
+<!-- badges: end -->
 
 `decideR` is the shared Bayesian decision layer of the ORCHESTRA
 analytics framework. It maps a posterior into an action under an
@@ -23,6 +31,25 @@ includes a **grade-band loss** (`grade_band_value()`) that prices
 quality-threshold payoffs -- a grain price that steps up as protein
 clears a milling and a premium band -- as a first-class step value
 schedule.
+
+## Related packages
+
+- [decisionSupport](https://CRAN.R-project.org/package=decisionSupport)
+  chooses between two alternatives by expected welfare from Monte Carlo
+  simulation, and uses value-of-information analysis to decide which
+  uncertainties are worth reducing.
+- [BCEA](https://CRAN.R-project.org/package=BCEA) takes cost and
+  effectiveness draws for two or more interventions, for example MCMC
+  output from a Bayesian model, and finds the most cost-effective one
+  with probabilistic sensitivity analysis.
+- [voi](https://CRAN.R-project.org/package=voi) calculates the expected
+  value of perfect, partial and sample information from a decision
+  model.
+
+decideR also starts from posterior draws, but chooses from a range of
+actions (a nitrogen rate, a position size) under an explicit utility and
+a hard constraint, can price stepped payoffs such as grain protein
+bands, and abstains instead of deciding when an input is not grounded.
 
 ## Installation
 
@@ -78,12 +105,12 @@ end.
 
 ## Contributing
 
-Bug reports and suggestions are welcome through the
-[issue tracker](https://github.com/max578/decideR/issues).
+Bug reports and suggestions are welcome through the [issue
+tracker](https://github.com/max578/decideR/issues).
 
 ## Citation
 
-```r
+``` r
 citation("decideR")
 ```
 

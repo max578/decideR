@@ -1,3 +1,9 @@
+# decideR (development version)
+
+* The package has a logo.
+* README carries status badges and lists related packages.
+* CI runs lintr (report-only) and test coverage.
+
 # decideR 0.3.1
 
 * Documentation names kernR's mechanism-consistency test directly.
