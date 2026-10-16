@@ -12,7 +12,7 @@ Maps a posterior distribution or an 'orchestra_manifest' inference result to an 
 Useful links:
 \itemize{
   \item \url{https://github.com/max578/decideR}
-  \item \url{https://max578.github.io/decideR}
+  \item \url{https://max578.github.io/decideR/}
   \item Report bugs at \url{https://github.com/max578/decideR/issues}
 }
 
