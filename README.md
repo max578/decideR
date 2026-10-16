@@ -3,10 +3,12 @@
 
 <!-- badges: start -->
 
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 [![R-CMD-check](https://github.com/max578/decideR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/max578/decideR/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/max578/decideR/graph/badge.svg)](https://app.codecov.io/gh/max578/decideR)
 [![r-universe](https://max578.r-universe.dev/badges/decideR)](https://max578.r-universe.dev/decideR)
+[![pkgdown](https://github.com/max578/decideR/actions/workflows/pkgdown.yaml/badge.svg)](https://max578.github.io/decideR/)
 <!-- badges: end -->
 
 `decideR` is the shared Bayesian decision layer of the ORCHESTRA
